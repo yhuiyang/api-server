@@ -14,13 +14,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+# python imports
+import os
+
+# GAE imports
 import webapp2
+from webapp2_extras.routes import RedirectRoute
+
+# local imports
+import handlers
 
 
-class MainHandler(webapp2.RequestHandler):
-    def get(self):
-        self.response.write('Hello world!')
+_debug = os.environ.get('SERVER_SOFTWARE').startswith('Dev')
+_config = {}
+_routes = [
+    RedirectRoute(r'/', redirect_to='dashboard', name='home', strict_slash=True),
+    RedirectRoute(r'/dashboard', handler=handlers.Dashboard, name='dashboard', strict_slash=True),
+]
 
-app = webapp2.WSGIApplication([
-    ('/', MainHandler)
-], debug=True)
+app = webapp2.WSGIApplication(routes=_routes, config=_config, debug=_debug)

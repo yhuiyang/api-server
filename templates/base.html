@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7" lang="en"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8" lang="en"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9" lang="en"> <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en"> <!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>{% block title %}{{ app_name }}{% endblock %}</title>
+    <meta name="description" content="">
+    <meta name="author" content="YHSoftLab">
+    <meta name="keywords" content="">
+
+    <!-- Mobile viewport optimized: h5bp.com/viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" href="/favicon.ico">
+    {% if is_mobile %}
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    {% endif %}
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    {% block mediaCSS %}{% endblock %}
+</head>
+<body>
+
+    <!-- Prompt IE 6 users to install Chrome Frame. Remove this if you support IE 6. chromium.org/developers/how-tos/chrome-frame-getting-started -->
+    <!--[if lt IE 8]>
+    <p class=chromeframe>Your browser is <em>ancient!</em><a href="http://browsehappy.com/">Upgrade to a different browser</a> or <a href="http://www.google.com/chromeframe/?redirect=true"> install Google Chrome Frame</a> to experience this site.</p>
+    <![endif]-->
+
+    <div id="page">
+        {% block navbar %}
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                    <span class="icon-chevron-down icon"></span>
+                </button>
+                <a class="brand" href="/">{{ app_name }}</a>
+                <div class="nav-collapse">
+                    <ul class="nav pull-right">
+                        <li><a href="#" target="_blank">About</a></li>
+                    </ul>
+                </div><!-- /.nav-collapse -->
+            </div><!-- /navbar-inner -->
+        </div><!-- /navbar -->
+        {% endblock %}
+
+        <div id="content" class="container container-fluid">
+            {% block header %}{% endblock %}
+
+            {% if messages|safe %}
+                {% for message in messages %}
+                <p class="alert alert-{{ message[1]|safe }}">
+                    <a class="close" data-dismiss="alert">×</a>
+                    {{ message[0]|safe }}
+                </p>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+
+        </div><!-- /content -->
+    </div><!-- /page -->
+
+    <hr>
+    {% block footer %}
+    <footer style="text-align: center;">
+        <p>Copyright &copy; 2013 <a href="//yhsoftlab.appspot.com" target="_blank">YHSoftLab</a>, All Rights Reserved.</p>
+    </footer>
+    {% endblock %}
+
+
+    <!-- JavaScript at the bottom for fast page loading -->
+    <!-- Grab Google CDN's jQuery, with a protocol relative URL; fall back to local if offline -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.2/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="/js/jquery-2.0.2.min.js"><\/script>')</script>
+    <script src="/js/bootstrap.min.js"></script>
+    {% block mediaJS %}{% endblock %}
+    <!-- end scripts -->
+</body>
+</html>
