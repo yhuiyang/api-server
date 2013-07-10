@@ -17,13 +17,20 @@
 #
 
 # python imports
+import logging
+from datetime import date
 
 # GAE imports
 import webapp2
 from webapp2_extras import jinja2
 from webapp2_extras.appengine import users
+from google.appengine.api import images
+from google.appengine.ext import ndb
+from google.appengine.ext import blobstore
+from google.appengine.ext.webapp import blobstore_handlers
 
 # local imports
+import models
 
 
 class BaseHandler(webapp2.RequestHandler):
@@ -59,3 +66,106 @@ class Dashboard(BaseHandler):
             'app_name': 'Dashboard'
         }
         self.render_response("dashboard.html", **params)
+
+
+class CostcoCreateAndListCampaign(BaseHandler):
+
+    @users.admin_required
+    def get(self):
+
+        allCampVer = models.CampaignVersion.get_by_id(models.COSTCO_CAMPAIGN_VERSIONS)
+        if allCampVer is not None:
+            ver_list = sorted(allCampVer.ver_list, reverse=True)
+            campaigns = []
+            for v in ver_list:
+                campVer = models.Campaign.get_by_id(str(v))
+                campaigns.append(campVer)
+        else:
+            campaigns = []
+
+        #logging.debug(campaigns)
+
+        params = {
+            'app_name': 'Costco',
+            'campaigns': campaigns
+        }
+        self.render_response('costco_campaign_list.html', **params)
+
+    def post(self):
+
+        start_date = self.request.get('date-start')
+        end_date = self.request.get('date-end')
+        logging.debug('start: %s, end: %s' % (start_date, end_date))
+        if start_date != '' and end_date != '':
+            sY, sM, sD = start_date.split('-')
+            eY, eM, eD = end_date.split('-')
+
+            versionsKey = ndb.Key(models.CampaignVersion, models.COSTCO_CAMPAIGN_VERSIONS)
+            versions = versionsKey.get()
+            if versions is None:
+                logging.debug('''Versions list doesn't exist yet''')
+                versions = models.CampaignVersion(id=models.COSTCO_CAMPAIGN_VERSIONS)
+                newVer = 100
+            else:
+                newVer = (versions.ver_list[-1] / 100 + 1) * 100
+
+            versions.ver_list.append(newVer)
+            campaign = models.Campaign(id=str(newVer))
+            campaign.start = date(int(sY), int(sM), int(sD))
+            campaign.end = date(int(eY), int(eM), int(eD))
+
+            ndb.put_multi([campaign, versions])
+
+        self.redirect_to('costco-create-and-list-campaign')
+
+
+class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
+
+    @users.admin_required
+    def get(self, camp_id):
+
+        # find all items belongs to this campaign
+        campaignKey = ndb.Key(models.Campaign, camp_id)
+        allItems = models.Item.query(models.Item.campaignKey == campaignKey)
+
+        # populate product_list for later rendering
+        product_list = []
+        for item in allItems:
+            product = {}
+            for n in [ 'url', 'brand', 'cname', 'ename', 'model_or_spec', 'code', 'discount', 'orig_price' ]:
+                product[n] = item.data.get(n)
+            product_list.append(product)
+
+        # the url to post to blobstore is dynamically generated, when blobstore saving completed, GAE will invoke
+        # our callback which was setup in blobstore.create_upload_url(THIS_IS_APP_POST_CALLBACK_URL)
+        myPostHandlerUrl = self.uri_for('costco-create-and-list-campaign-product', camp_id=camp_id)
+        params = {
+            'app_name': 'Costco',
+            'post_url': blobstore.create_upload_url(myPostHandlerUrl),
+            'products': product_list,
+        }
+
+        self.render_response('costco_campaign_product_list.html', **params)
+
+    def post(self, camp_id):
+
+        upload_files = self.get_uploads('file')
+        blob_info = upload_files[0]
+
+        data_dict = {}
+        # collect item image meta data
+        data_dict['url'] = images.get_serving_url(blob_info.key())
+        for prop in blobstore.BlobInfo.properties():
+            data_dict[prop] = blob_info.get(prop)
+
+        # collect item info
+        for prop in [ 'brand', 'cname', 'ename', 'model_or_spec', 'code', 'discount', 'orig_price' ]:
+            data_dict[prop] = self.request.get(prop)
+
+        # create new item in datastore
+        item = models.Item()
+        item.campaignKey = ndb.Key(models.Campaign, camp_id)
+        item.data = data_dict
+        item.put()
+
+        self.redirect_to('costco-create-and-list-campaign-product', camp_id=camp_id)

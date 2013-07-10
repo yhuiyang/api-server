@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block mediaCSS %}
+<style type="text/css">
+body {
+    padding-top: 50px;
+}
+
+.form-background {
+    background-color: #cccccc;
+    padding: 30px;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
+}
+</style>
+{% endblock mediaCSS %}
+
+{% block content %}
+<div id="myCreateForm"  class="collapse">
+    <form class="form-horizontal form-background" action="{{ post_url }}" method="post" enctype="multipart/form-data">
+        <fieldset>
+            <legend>Create New Product</legend>
+            <div class="control-group">
+                <label class="control-label">Image file:</label>
+                <div class="controls">
+                    <input type="file" name="file">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Brand:</label>
+                <div class="controls">
+                    <input type="text" name="brand" required>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Chinese name:</label>
+                <div class="controls">
+                    <input type="text" name="cname" required>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">English name:</label>
+                <div class="controls">
+                    <input type="text" name="ename" required="">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Model or Spec:</label>
+                <div class="controls">
+                    <input type="text" name="model_or_spec">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Costco Code:</label>
+                <div class="controls">
+                    <input type="text" name="code">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Discount:</label>
+                <div class="controls">
+                    <input type="text" name="discount" required>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Original price:</label>
+                <div class="controls">
+                    <input type="text" name="orig_price">
+                </div>
+            </div>
+            <div class="form-action">
+                <button type="submit" class="btn btn-primary">Create</button>
+                <button type="button" class="btn">Reset</button>
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+<h1 class="pull-left">Product List</h1>
+<a href="/costco/campaigns" class="btn btn-primary btn-mini"><i class="icon-arrow-up icon-white"></i>Back to campaign list</a>
+<button type="button" id="showHideBtn" class="btn btn-info pull-right" data-toggle="collapse" data-target="#myCreateForm">
+    <i id="btnIcon" class="icon-chevron-down icon-white"></i><span id="btnText">Show form</span>
+</button>
+
+{% if products %}
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Image</th>
+            <th>Brand</th>
+            <th>CName</th>
+            <th>EName</th>
+            <th>Model or Spec</th>
+            <th>Costco Code</th>
+            <th>Discount</th>
+            <th>Original Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for prod in products %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td><img src="{{ prod['url'] }}=s300"></td>
+            <td>{{ prod['brand'] }}</td>
+            <td>{{ prod['cname'] }}</td>
+            <td>{{ prod['ename'] }}</td>
+            <td>{{ prod['model_or_spec'] }}</td>
+            <td>{{ prod['code'] }}</td>
+            <td>{{ prod['discount'] }}</td>
+            <td>{{ prod['orig_price'] }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock content %}
+
+{% block mediaJS %}
+<script type="text/javascript">
+$('#myCreateForm').on('shown', function() {
+    $('#btnText').text('Hide form');
+    $('#btnIcon').removeClass('icon-chevron-down').addClass('icon-chevron-up')
+})
+$('#myCreateForm').on('hidden', function() {
+    $('#btnText').text('Show form');
+    $('#btnIcon').removeClass('icon-chevron-up').addClass('icon-chevron-down')
+})
+</script>
+{% endblock %}

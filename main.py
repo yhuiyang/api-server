@@ -31,6 +31,10 @@ _config = {}
 _routes = [
     RedirectRoute(r'/', redirect_to='dashboard', name='home', strict_slash=True),
     RedirectRoute(r'/dashboard', handler=handlers.Dashboard, name='dashboard', strict_slash=True),
+    RedirectRoute(r'/costco/campaign/<camp_id:[1-9]\d+>', handler=handlers.CostcoCreateAndListCampaignProduct,
+                  name='costco-create-and-list-campaign-product', strict_slash=True),
+    RedirectRoute(r'/costco/campaigns', handler=handlers.CostcoCreateAndListCampaign,
+                  name='costco-create-and-list-campaign', strict_slash=True),
 ]
 
 app = webapp2.WSGIApplication(routes=_routes, config=_config, debug=_debug)
