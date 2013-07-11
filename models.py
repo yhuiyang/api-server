@@ -31,9 +31,11 @@ class CampaignVersion(ndb.Model):  # one entity
     ver_list = ndb.IntegerProperty(repeated=True, indexed=False)
 
 
-class Campaign(ndb.Model):  # one version, one entity, id=version
+class Campaign(ndb.Model):  # one major version, one entity, id=major version
     start = ndb.DateProperty(required=True)
     end = ndb.DateProperty(required=True)
+    patch = ndb.IntegerProperty(default=0, indexed=False)
+    published = ndb.BooleanProperty(default=False, indexed=False)
 
 
 class Item(ndb.Model):

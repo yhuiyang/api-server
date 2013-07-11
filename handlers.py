@@ -18,6 +18,7 @@
 
 # python imports
 import logging
+import json
 from datetime import date
 
 # GAE imports
@@ -78,8 +79,14 @@ class CostcoCreateAndListCampaign(BaseHandler):
             ver_list = sorted(allCampVer.ver_list, reverse=True)
             campaigns = []
             for v in ver_list:
-                campVer = models.Campaign.get_by_id(str(v))
-                campaigns.append(campVer)
+                campaign = {}
+                campEntity = models.Campaign.get_by_id(str((v / 100) * 100))
+                campaign['start'] = campEntity.start
+                campaign['end'] = campEntity.end
+                campaign['ver'] = v  # v should be equal to (id + patch), otherwise it is error
+                campaign['patch'] = campEntity.patch
+                campaign['published'] = campEntity.published
+                campaigns.append(campaign)
         else:
             campaigns = []
 
@@ -125,14 +132,16 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
     def get(self, camp_id):
 
         # find all items belongs to this campaign
-        campaignKey = ndb.Key(models.Campaign, camp_id)
+        int_camp_id = int(camp_id)
+        camp_key = str((int_camp_id / 100) * 100)
+        campaignKey = ndb.Key(models.Campaign, camp_key)
         allItems = models.Item.query(models.Item.campaignKey == campaignKey)
 
         # populate product_list for later rendering
         product_list = []
         for item in allItems:
             product = {}
-            for n in [ 'url', 'brand', 'cname', 'ename', 'model_or_spec', 'code', 'discount', 'orig_price' ]:
+            for n in ['url', 'brand', 'cname', 'ename', 'model_or_spec', 'code', 'discount', 'orig_price']:
                 product[n] = item.data.get(n)
             product_list.append(product)
 
@@ -159,13 +168,64 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
             data_dict[prop] = blob_info.get(prop)
 
         # collect item info
-        for prop in [ 'brand', 'cname', 'ename', 'model_or_spec', 'code', 'discount', 'orig_price' ]:
+        for prop in ['brand', 'cname', 'ename', 'model_or_spec', 'code', 'discount', 'orig_price']:
             data_dict[prop] = self.request.get(prop)
 
         # create new item in datastore
         item = models.Item()
-        item.campaignKey = ndb.Key(models.Campaign, camp_id)
+        item.campaignKey = ndb.Key(models.Campaign, str((int(camp_id) / 100) * 100))
         item.data = data_dict
         item.put()
 
         self.redirect_to('costco-create-and-list-campaign-product', camp_id=camp_id)
+
+
+class ApiCostcoCampaignWhatsNew(BaseHandler):
+
+    def get(self):
+
+        client_camp_str = self.request.get('camp_id')
+        if client_camp_str == '':
+            client_camp_int = 0
+        else:
+            client_camp_int = int(client_camp_str)
+
+        # allCampVer holds all published campaign version number
+        allCampVer = models.CampaignVersion.get_by_id(models.COSTCO_CAMPAIGN_VERSIONS)
+        resp = [ver for ver in allCampVer.ver_list if ver > client_camp_int]
+
+        self.response.content_type = 'application/json'
+        self.response.body = json.dumps(resp)
+
+
+class ApiCostcoCampaignDetail(BaseHandler):
+
+    def get(self, camp_id):
+
+        self.response.content_type = 'application/json'
+
+        camp_id_int = int(camp_id)
+        camp_key = str((camp_id_int / 100) * 100)
+
+        campaignKey = ndb.Key(models.Campaign, camp_key)
+        campaignEntity = campaignKey.get()
+        # verify campaign do exist and version is matched
+        if campaignEntity is None or campaignEntity.patch != (camp_id_int % 100):
+            resp = {'error': "Campaign version doesn't exist!"}
+            self.response.body = json.dumps(resp)
+            return
+
+        resp = {
+            'campaign': camp_id_int,
+            'begin': campaignEntity.start.isoformat(),
+            'end': campaignEntity.end.isoformat()
+        }
+        allItems = models.Item.query(models.Item.campaignKey == campaignKey)
+        item_list = []
+        for item in allItems:
+            item_dict = {}
+            for prop in ['url', 'brand', 'cname', 'ename', 'model_or_spec', 'code', 'discount', 'orig_price']:
+                item_dict[prop] = item.data.get(prop)
+            item_list.append(item_dict)
+        resp['items'] = item_list
+        self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
