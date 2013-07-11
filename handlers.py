@@ -212,7 +212,7 @@ class ApiCostcoCampaignDetail(BaseHandler):
         # verify campaign do exist and version is matched
         if campaignEntity is None or campaignEntity.patch != (camp_id_int % 100):
             resp = {'error': "Campaign version doesn't exist!"}
-            self.response.body = json.dumps(resp)
+            self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
             return
 
         resp = {
