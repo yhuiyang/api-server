@@ -26,6 +26,7 @@ import webapp2
 from webapp2_extras import jinja2
 from webapp2_extras.appengine import users
 from google.appengine.api import images
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
@@ -204,17 +205,43 @@ class ApiCostcoCampaignDetail(BaseHandler):
 
         self.response.content_type = 'application/json'
 
-        camp_id_int = int(camp_id)
-        camp_key = str((camp_id_int / 100) * 100)
-
-        campaignKey = ndb.Key(models.Campaign, camp_key)
-        campaignEntity = campaignKey.get()
-        # verify campaign do exist and version is matched
-        if campaignEntity is None or campaignEntity.patch != (camp_id_int % 100):
-            resp = {'error': "Campaign version doesn't exist!"}
-            self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
+        # Check memcache first,
+        cachedCampaign = getCachedCostcoCampaign(camp_id)
+        if cachedCampaign is not None:
+            self.response.body = cachedCampaign
             return
 
+        # Get campaign entity
+        camp_id_int = int(camp_id)
+        camp_key = str((camp_id_int / 100) * 100)
+        campaignKey = ndb.Key(models.Campaign, camp_key)
+        campaignEntity = campaignKey.get()
+
+        # Should we allow cache?
+        # we cache:
+        #   'error' (with shorter expiration)
+        #       campaign doesn't exist
+        #       campaign exists but version isn't matched
+        #       campaign exists but not yet published
+        #   'success' (with longer expiration)
+        #       no above errors detected
+        campaign_published = False
+        error_happened = False
+        if campaignEntity is not None:
+            if campaignEntity.published is True:
+                campaign_published = True
+            elif campaignEntity.patch != (camp_id_int % 100):
+                error_happened = True
+        else:
+            error_happened = True
+
+        if error_happened is True or campaign_published is False:
+            resp = {'error': "Campaign version doesn't exist!"}
+            self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
+            setCachedCostcoCampaign(camp_id, self.response.body, 300)
+            return
+
+        # Now, the campaign is existed, version matched, and published, but not yet cached.
         resp = {
             'campaign': camp_id_int,
             'begin': campaignEntity.start.isoformat(),
@@ -229,3 +256,20 @@ class ApiCostcoCampaignDetail(BaseHandler):
             item_list.append(item_dict)
         resp['items'] = item_list
         self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
+        setCachedCostcoCampaign(camp_id, self.response.body)
+
+
+def getCachedCostcoCampaign(major_version):
+    return memcache.get(major_version, namespace='costco',)
+
+
+def setCachedCostcoCampaign(major_version, detail, time=86400):
+    memcache.set(major_version, detail, time=time, namespace='costco')
+
+
+def rmCachedCostcoCampaign(major_version):
+    result = memcache.delete(major_version, namespace='costco')
+    if result == memcache.DELETE_NETWORK_FAILURE:
+        logging.error('DELETE NETWORK FAILURE')
+    elif result == memcache.DELETE_ITEM_MISSING:
+        logging.warning('DELETE ITEM MISSING')
