@@ -60,7 +60,7 @@ body {
     <tbody>
         {% for campaign in campaigns %}
         <tr onclick="self.location='/costco/campaign/{{ campaign.ver }}'">
-            <td>{{ loop.index }}</td>
+            <td>{{ loop.index }}<i class="icon-{% if campaign.published %}play{% else %}stop{% endif %}"></i></td>
             <td>{{ campaign.ver }}</td>
             <td>{{ campaign.patch }}</td>
             <td>{{ campaign.start }}</td>
