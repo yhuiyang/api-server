@@ -31,7 +31,9 @@ _config = {}
 _routes = [
     RedirectRoute(r'/', redirect_to='dashboard', name='home', strict_slash=True),
     RedirectRoute(r'/dashboard', handler=handlers.Dashboard, name='dashboard', strict_slash=True),
-    RedirectRoute(r'/costco/campaign/<camp_id:[1-9]\d+>', handler=handlers.CostcoCreateAndListCampaignProduct,
+    RedirectRoute(r'/costco/campaign/<camp_id:[1-9]\d*>/toggle_publish', handler=handlers.CostcoCampaignTogglePublish,
+                  name='costco-campaign-toggle-publish-state', strict_slash=True),
+    RedirectRoute(r'/costco/campaign/<camp_id:[1-9]\d*>', handler=handlers.CostcoCreateAndListCampaignProduct,
                   name='costco-create-and-list-campaign-product', strict_slash=True),
     RedirectRoute(r'/costco/campaigns', handler=handlers.CostcoCreateAndListCampaign,
                   name='costco-create-and-list-campaign', strict_slash=True),

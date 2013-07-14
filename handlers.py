@@ -151,6 +151,7 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
         myPostHandlerUrl = self.uri_for('costco-create-and-list-campaign-product', camp_id=camp_id)
         params = {
             'app_name': 'Costco',
+            'campaign': campaignKey.get(),
             'post_url': blobstore.create_upload_url(myPostHandlerUrl),
             'products': product_list,
         }
@@ -177,6 +178,18 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
         item.campaignKey = ndb.Key(models.Campaign, str((int(camp_id) / 100) * 100))
         item.data = data_dict
         item.put()
+
+        self.redirect_to('costco-create-and-list-campaign-product', camp_id=camp_id)
+
+
+class CostcoCampaignTogglePublish(BaseHandler):
+
+    def post(self, camp_id):
+
+        campaignKey = ndb.Key(models.Campaign, str((int(camp_id) / 100) * 100))
+        campaignEntity = campaignKey.get()
+        campaignEntity.published ^= True
+        campaignEntity.put()
 
         self.redirect_to('costco-create-and-list-campaign-product', camp_id=camp_id)
 
