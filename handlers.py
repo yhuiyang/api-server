@@ -152,6 +152,10 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
         params = {
             'app_name': 'Costco',
             'campaign': campaignKey.get(),
+            'str_btn_disable_publish': 'Click to disable publish',
+            'str_btn_enable_publish': 'Click to enable publish',
+            'str_confirm_disable_publish': 'Are you sure you want to disable publish state?',
+            'str_confirm_enable_publish': 'Are you sure you want to enable publish state?',
             'post_url': blobstore.create_upload_url(myPostHandlerUrl),
             'products': product_list,
         }
@@ -182,16 +186,23 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
         self.redirect_to('costco-create-and-list-campaign-product', camp_id=camp_id)
 
 
-class CostcoCampaignTogglePublish(BaseHandler):
+class CostcoCampaignEdit(BaseHandler):
 
     def post(self, camp_id):
 
         campaignKey = ndb.Key(models.Campaign, str((int(camp_id) / 100) * 100))
-        campaignEntity = campaignKey.get()
-        campaignEntity.published ^= True
-        campaignEntity.put()
 
-        self.redirect_to('costco-create-and-list-campaign-product', camp_id=camp_id)
+        # edit publish state
+        update_publish = self.request.get('publish')
+        if update_publish is not None and update_publish in ['true', 'false']:
+            campaignEntity = campaignKey.get()
+            if update_publish == 'true':
+                campaignEntity.published = True
+            elif update_publish == 'false':
+                campaignEntity.published = False
+            campaignEntity.put()
+
+        # edit xxx...
 
 
 class ApiCostcoCampaignWhatsNew(BaseHandler):

@@ -78,14 +78,20 @@ body {
 
 <h1>Product List
     <a href="/costco/campaigns" class="btn btn-primary btn-mini"><i class="icon-arrow-up icon-white"></i>Back to campaign list</a>
-    <button type="button" class="btn btn-{% if campaign.published %}success{% else %}danger{% endif %} btn-mini" data-toggle="modal" data-target="#togglePublishDialog"><i class="icon-{% if campaign.published %}stop{% else %}play{% endif %} icon-white"></i>{% if campaign.published %}Disable{% else %}Enable{% endif %} publish</button>
-    <div id="togglePublishDialog" class="modal hide fade">
+    <button id="idShowConfirmDlgBtn" class="btn btn-mini {% if campaign.published %}btn-success{% else %}btn-danger{% endif %}" data-toggle="modal" data-target="#confirmDlg"><i id="idShowConfirmDlgBtnIcon" class="{% if campaign.published %}icon-stop{% else %}icon-play{% endif %} icon-white"></i><span id="idShowConfirmDlgBtnText">{% if campaign.published %}{{ str_btn_disable_publish }}{% else %}{{ str_btn_enable_publish }}{% endif %}</span></button>
+    <div id="confirmDlg" class="modal hide fade">
         <div class="modal-header">
             <button class="close" data-dismiss="modal">&times;</button>
             <h3>Confirm</h3>
         </div>
         <div class="modal-body">
-            <h4>Are you sure you want to {% if campaign.published %}disable{% else %}enable{% endif %} publish state?</h4>
+            <h4 id="idConfirmDlgBodyText">
+                {% if campaign.published %}
+                    {{ str_confirm_disable_publish }}
+                {% else %}
+                    {{ str_confirm_enable_publish }}
+                {% endif %}
+            </h4>
         </div>
         <div class="modal-footer">
             <button class="btn" data-dismiss="modal">No</button>
@@ -135,11 +141,39 @@ body {
 <script type="text/javascript">
 $('#myCreateForm').on('shown', function() {
     $('#btnText').text('Hide form');
-    $('#btnIcon').removeClass('icon-chevron-down').addClass('icon-chevron-up')
+    $('#btnIcon').removeClass('icon-chevron-down').addClass('icon-chevron-up');
 })
 $('#myCreateForm').on('hidden', function() {
     $('#btnText').text('Show form');
-    $('#btnIcon').removeClass('icon-chevron-up').addClass('icon-chevron-down')
+    $('#btnIcon').removeClass('icon-chevron-up').addClass('icon-chevron-down');
+})
+$('#confirmTogglePublishBtn').on('click', function() {
+    var publish;
+    var str_confirm = $('#idShowConfirmDlgBtn').text();
+    if (str_confirm == "{{ str_btn_enable_publish }}") {
+        publish = true;
+    } else if (str_confirm == "{{ str_btn_disable_publish }}") {
+        publish = false;
+    } else {
+        return false;
+    }
+
+    var url = "/costco/campaign/{{ campaign.key.id() }}/edit";
+    $.post(url, {'publish': publish}, function(){
+        if (publish) {
+            log('Campaign publish state changed. Now: enabled.');
+            $('#idShowConfirmDlgBtn').removeClass('btn-danger').addClass('btn-success');
+            $('#idShowConfirmDlgBtnIcon').removeClass('icon-play').addClass('icon-stop');
+            $('#idShowConfirmDlgBtnText').text('{{ str_btn_disable_publish }}');
+            $('#idConfirmDlgBodyText').text('{{ str_confirm_disable_publish }}');
+        } else {
+            log('Campaign publish state changed. Now: disabled.');
+            $('#idShowConfirmDlgBtn').removeClass('btn-success').addClass('btn-danger');
+            $('#idShowConfirmDlgBtnIcon').removeClass('icon-stop').addClass('icon-play');
+            $('#idShowConfirmDlgBtnText').text('{{ str_btn_enable_publish }}');
+            $('#idConfirmDlgBodyText').text('{{ str_confirm_enable_publish }}');
+        }
+    });
 })
 $('#confirmTogglePublishBtn').on('click', function() {
     var xmlhttp = new XMLHttpRequest();
