@@ -7,6 +7,10 @@ threadsafe: yes
 builtins:
 - appstats: on
 
+automatic_scaling:
+  max_idle_instances: 2
+  min_pending_latency: 15.0s
+
 handlers:
 - url: /favicon\.ico
   static_files: static/favicon.ico
