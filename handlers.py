@@ -354,7 +354,7 @@ class ApiCostcoCampaignDetail(BaseHandler):
             resp = {'error': 'Internal error!'}
         else:
             resp = publishedCampEntity.campaign_data
-        self.response.body = json.dumps(resp, indent=4, separators=(',', ':'))
+        self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
 
 
 def getCachedCostcoAllCampaignMajorVersions(requestType='str'):
