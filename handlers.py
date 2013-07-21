@@ -200,8 +200,12 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
         data_dict = dict()
         # collect item image meta data
         data_dict['url'] = images.get_serving_url(blob_info.key())
-        for prop in blobstore.BlobInfo.properties():
-            data_dict[prop] = blob_info.get(prop)
+        # blobstore.BlobInfo.properties() = set(['creation', 'content_type', 'md5_hash', 'size', 'fielname'])
+        data_dict['creation'] = blob_info.creation.isoformat()
+        data_dict['content_type'] = blob_info.content_type
+        data_dict['md5_hash'] = blob_info.md5_hash
+        data_dict['size'] = blob_info.size
+        data_dict['filename'] = blob_info.filename
 
         # collect item info
         int_camp_id = int(camp_id)
