@@ -24,9 +24,10 @@ from datetime import date
 # GAE imports
 import webapp2
 from webapp2_extras import jinja2
-from webapp2_extras.appengine import users
+from webapp2_extras.appengine.users import admin_required
 from google.appengine.api import images
 from google.appengine.api import memcache
+from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
@@ -61,7 +62,7 @@ class BaseHandler(webapp2.RequestHandler):
 
 class Dashboard(BaseHandler):
 
-    @users.admin_required
+    @admin_required
     def get(self):
 
         params = {
@@ -72,24 +73,44 @@ class Dashboard(BaseHandler):
 
 class CostcoCreateAndListCampaign(BaseHandler):
 
-    @users.admin_required
+    def getAllCampaignMajorVersionList(self):
+        """
+        Retrieve a unsorted list which contains campaign major version integer number.
+        Query data store only if querying mem cache is missed.
+
+        Return: python list. Ex: [1400, 800, 900]
+        """
+        allCampaignMajorVersionList = getCachedCostcoAllCampaignMajorVersions('list')
+        if allCampaignMajorVersionList is None:
+            allCampInDatastore = models.Campaign.query()
+            campMajorVerList = []
+            for ver in allCampInDatastore:
+                campMajorVerList.append(int(ver.key.id()))
+
+            setCachedCostcoAllCampaignMajorVersions(campMajorVerList)
+        else:
+            campMajorVerList = allCampaignMajorVersionList
+
+        return campMajorVerList
+
+    @admin_required
     def get(self):
 
-        allCampVer = models.CampaignVersion.get_by_id(models.COSTCO_CAMPAIGN_VERSIONS)
-        if allCampVer is not None:
-            ver_list = sorted(allCampVer.ver_list, reverse=True)
-            campaigns = []
-            for v in ver_list:
-                campaign = {}
-                campEntity = models.Campaign.get_by_id(str((v / 100) * 100))
-                campaign['start'] = campEntity.start
-                campaign['end'] = campEntity.end
-                campaign['ver'] = v  # v should be equal to (id + patch), otherwise it is error
-                campaign['patch'] = campEntity.patch
-                campaign['published'] = campEntity.published
-                campaigns.append(campaign)
-        else:
-            campaigns = []
+        campMajorVerList = self.getAllCampaignMajorVersionList()
+        campMajorVerList.sort(reverse=True)
+
+        # prepare for rendering data
+        campaigns = []
+        for majorVerInt in campMajorVerList:
+            campaign = {}
+            campEntity = models.Campaign.get_by_id(str(majorVerInt))
+            campaign['start'] = campEntity.start
+            campaign['end'] = campEntity.end
+            campaign['published'] = campEntity.published
+            campaign['modified'] = campEntity.modified
+            campaign['ver'] = majorVerInt + campEntity.patch
+            campaign['type'] = campEntity.type
+            campaigns.append(campaign)
 
         #logging.debug(campaigns)
 
@@ -101,35 +122,44 @@ class CostcoCreateAndListCampaign(BaseHandler):
 
     def post(self):
 
+        if not users.is_current_user_admin():
+            self.abort(403)
+
         start_date = self.request.get('date-start')
         end_date = self.request.get('date-end')
-        logging.debug('start: %s, end: %s' % (start_date, end_date))
-        if start_date != '' and end_date != '':
-            sY, sM, sD = start_date.split('-')
-            eY, eM, eD = end_date.split('-')
+        type = self.request.get('type')
 
-            versionsKey = ndb.Key(models.CampaignVersion, models.COSTCO_CAMPAIGN_VERSIONS)
-            versions = versionsKey.get()
-            if versions is None:
-                logging.debug('''Versions list doesn't exist yet''')
-                versions = models.CampaignVersion(id=models.COSTCO_CAMPAIGN_VERSIONS)
-                newVer = 100
-            else:
-                newVer = (versions.ver_list[-1] / 100 + 1) * 100
+        logging.debug('start: %s, end: %s, type: %s' % (start_date, end_date, type))
 
-            versions.ver_list.append(newVer)
-            campaign = models.Campaign(id=str(newVer))
-            campaign.start = date(int(sY), int(sM), int(sD))
-            campaign.end = date(int(eY), int(eM), int(eD))
+        sY, sM, sD = start_date.split('-')
+        eY, eM, eD = end_date.split('-')
 
-            ndb.put_multi([campaign, versions])
+        mgrKey = ndb.Key(models.CampaignManager, models.COSTCO_CAMPAIGN_MANAGER)
+        mgrEntity = mgrKey.get()
+        if mgrEntity is None:
+            logging.debug('''Manager entity doesn't exist yet''')
+            mgrEntity = models.CampaignManager(id=models.COSTCO_CAMPAIGN_MANAGER)
+            newVer = 100
+        else:
+            newVer = mgrEntity.lastCreatedVersion + 100
+
+        mgrEntity.lastCreatedVersion = newVer
+        campaign = models.Campaign(id=str(newVer))
+        campaign.start = date(int(sY), int(sM), int(sD))
+        campaign.end = date(int(eY), int(eM), int(eD))
+        campaign.type = type
+
+        ndb.put_multi([campaign, mgrEntity])
+
+        # update memcache
+        appendCachedCostcoAllCampaignMajorVersions(newVer)
 
         self.redirect_to('costco-create-and-list-campaign')
 
 
 class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
 
-    @users.admin_required
+    @admin_required
     def get(self, camp_id):
 
         # find all items belongs to this campaign
@@ -139,10 +169,11 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
         allItems = models.Item.query(models.Item.campaignKey == campaignKey)
 
         # populate product_list for later rendering
+        campaignEntity = campaignKey.get()
         product_list = []
         for item in allItems:
             product = {}
-            for n in ['url', 'brand', 'cname', 'ename', 'model_or_spec', 'code', 'discount', 'orig_price']:
+            for n in models.Item.get_fields(campaignEntity.type):
                 product[n] = item.data.get(n)
             product_list.append(product)
 
@@ -151,37 +182,48 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
         myPostHandlerUrl = self.uri_for('costco-create-and-list-campaign-product', camp_id=camp_id)
         params = {
             'app_name': 'Costco',
-            'campaign': campaignKey.get(),
-            'str_btn_disable_publish': 'Click to disable publish',
-            'str_btn_enable_publish': 'Click to enable publish',
-            'str_confirm_disable_publish': 'Are you sure you want to disable publish state?',
-            'str_confirm_enable_publish': 'Are you sure you want to enable publish state?',
+            'campaign': campaignEntity,
             'post_url': blobstore.create_upload_url(myPostHandlerUrl),
             'products': product_list,
         }
-
         self.render_response('costco_campaign_product_list.html', **params)
 
     def post(self, camp_id):
 
+        if not users.is_current_user_admin():
+            self.abort(403)
+
         upload_files = self.get_uploads('file')
         blob_info = upload_files[0]
 
-        data_dict = {}
+        data_dict = dict()
         # collect item image meta data
         data_dict['url'] = images.get_serving_url(blob_info.key())
         for prop in blobstore.BlobInfo.properties():
             data_dict[prop] = blob_info.get(prop)
 
         # collect item info
-        for prop in ['brand', 'cname', 'ename', 'model_or_spec', 'code', 'discount', 'orig_price']:
-            data_dict[prop] = self.request.get(prop)
+        int_camp_id = int(camp_id)
+        camp_key = str((int_camp_id / 100) * 100)
+        campaignEntity = models.Campaign.get_by_id(camp_key)
+        for prop in models.Item.get_fields(campaignEntity.type):
+            if prop == 'url':  # skip 'url' setting, it has already set done.
+                continue
+            if prop == 'locations':
+                data_dict[prop] = self.request.get_all(prop)
+            else:
+                data_dict[prop] = self.request.get(prop)
+
+        # mark campaign dirty
+        campaignEntity.modified = True
 
         # create new item in datastore
         item = models.Item()
-        item.campaignKey = ndb.Key(models.Campaign, str((int(camp_id) / 100) * 100))
+        item.campaignKey = campaignEntity.key
         item.data = data_dict
-        item.put()
+
+        # update datastore
+        ndb.put_multi([item, campaignEntity])
 
         self.redirect_to('costco-create-and-list-campaign-product', camp_id=camp_id)
 
@@ -190,17 +232,83 @@ class CostcoCampaignEdit(BaseHandler):
 
     def post(self, camp_id):
 
-        campaignKey = ndb.Key(models.Campaign, str((int(camp_id) / 100) * 100))
+        if not users.is_current_user_admin():
+            self.abort(403)
+
+        intCampMajorVer = (int(camp_id) / 100) * 100
+        strCampMajorVer = str(intCampMajorVer)
+        campaignKey = ndb.Key(models.Campaign, strCampMajorVer)
 
         # edit publish state
-        update_publish = self.request.get('publish')
-        if update_publish is not None and update_publish in ['true', 'false']:
+        request_publish = self.request.get('publish')
+        if request_publish is not None and request_publish in ['true', 'false']:
             campaignEntity = campaignKey.get()
-            if update_publish == 'true':
+            intCampVer = intCampMajorVer + campaignEntity.patch
+
+            if request_publish == 'true':  # do publish
+
+                # check if modification happened
+                if campaignEntity.modified is False:
+                    logging.warning('Request publish a non-modification campaign, skip action!')
+                    self.abort(406)  # not acceptable
+
+                # retrieve campaign manager
+                campMgrEntity = models.CampaignManager.get_or_insert(models.COSTCO_CAMPAIGN_MANAGER)
+
+                # check if still in published state
+                if campaignEntity.published is True:
+                    try:
+                        campMgrEntity.listPublishedVersions.remove(intCampVer)
+                    except ValueError:
+                        logging.error('Remove non-exist version(%d) from published version list.' % intCampVer)
+
+                # update campaign fields
+                campaignEntity.patch += 1
+                campaignEntity.modified = False
                 campaignEntity.published = True
-            elif update_publish == 'false':
+
+                # new campaign version number
+                intCampVer = intCampMajorVer + campaignEntity.patch
+
+                # populate this campaign data and create new one published campaign entity for it
+                camp_data = dict()
+                camp_data['start'] = campaignEntity.start.isoformat()
+                camp_data['end'] = campaignEntity.end.isoformat()
+                camp_data['type'] = campaignEntity.type
+                camp_data['items'] = []
+                allCampItems = models.Item.query(models.Item.campaignKey == campaignKey)
+                for item in allCampItems:
+                    camp_data['items'].append(item.data)
+
+                publishedCampEntity = models.PublishedCampaign(id=str(intCampVer))
+                publishedCampEntity.campaign_data = camp_data
+
+                # append campaign version number into published campaign version list
+                campMgrEntity.listPublishedVersions.append(intCampVer)
+
+                # update data store
+                ndb.put_multi([campMgrEntity, campaignEntity, publishedCampEntity])
+
+            elif request_publish == 'false':  # do un-publish
+
+                # check if already published
+                if campaignEntity.published is False:
+                    logging.warning('Request un-publish a un-published campaign, skip action!')
+                    self.abort(406)  # not acceptable
+
+                # retrieve campaign manager
+                campMgrEntity = models.CampaignManager.get_or_insert(models.COSTCO_CAMPAIGN_MANAGER)
+
+                try:
+                    campMgrEntity.listPublishedVersions.remove(intCampVer)
+                except ValueError:
+                    logging.error("Campaign is marked published, but doesn't exist in published campaign list!")
+
+                # update campaign fields
                 campaignEntity.published = False
-            campaignEntity.put()
+
+                # update data store
+                ndb.put_multi([campMgrEntity, campaignEntity])
 
         # edit xxx...
 
@@ -215,9 +323,10 @@ class ApiCostcoCampaignWhatsNew(BaseHandler):
         else:
             client_camp_int = int(client_camp_str)
 
-        # allCampVer holds all published campaign version number
-        allCampVer = models.CampaignVersion.get_by_id(models.COSTCO_CAMPAIGN_VERSIONS)
-        resp = [ver for ver in allCampVer.ver_list if ver > client_camp_int]
+        # CampaignManager holds published campaign version number list
+        campMgrEntity = models.CampaignManager.get_or_insert(models.COSTCO_CAMPAIGN_MANAGER)
+        resp = [ver for ver in campMgrEntity.listPublishedVersions if ver > client_camp_int]
+        resp.sort(reverse=True)
 
         self.response.content_type = 'application/json'
         self.response.body = json.dumps(resp)
@@ -229,71 +338,70 @@ class ApiCostcoCampaignDetail(BaseHandler):
 
         self.response.content_type = 'application/json'
 
-        # Check memcache first,
-        cachedCampaign = getCachedCostcoCampaign(camp_id)
-        if cachedCampaign is not None:
-            self.response.body = cachedCampaign
-            return
+        strCampVer = camp_id
+        intCampVer = int(camp_id)
 
-        # Get campaign entity
-        camp_id_int = int(camp_id)
-        camp_key = str((camp_id_int / 100) * 100)
-        campaignKey = ndb.Key(models.Campaign, camp_key)
-        campaignEntity = campaignKey.get()
-
-        # Should we allow cache?
-        # we cache:
-        #   'error' (with shorter expiration)
-        #       campaign doesn't exist
-        #       campaign exists but version isn't matched
-        #       campaign exists but not yet published
-        #   'success' (with longer expiration)
-        #       no above errors detected
-        campaign_published = False
-        error_happened = False
-        if campaignEntity is not None:
-            if campaignEntity.published is True:
-                campaign_published = True
-            elif campaignEntity.patch != (camp_id_int % 100):
-                error_happened = True
-        else:
-            error_happened = True
-
-        if error_happened is True or campaign_published is False:
-            resp = {'error': "Campaign version doesn't exist!"}
+        # check if this is published campaign
+        campMgrEntity = models.CampaignManager.get_or_insert(models.COSTCO_CAMPAIGN_MANAGER)
+        if intCampVer not in campMgrEntity.listPublishedVersions:
+            resp = {'error': 'Requested campaign is not yet published!'}
             self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
-            setCachedCostcoCampaign(camp_id, self.response.body, 300)
             return
 
-        # Now, the campaign is existed, version matched, and published, but not yet cached.
-        resp = {
-            'campaign': camp_id_int,
-            'begin': campaignEntity.start.isoformat(),
-            'end': campaignEntity.end.isoformat()
-        }
-        allItems = models.Item.query(models.Item.campaignKey == campaignKey)
-        item_list = []
-        for item in allItems:
-            item_dict = {}
-            for prop in ['url', 'brand', 'cname', 'ename', 'model_or_spec', 'code', 'discount', 'orig_price']:
-                item_dict[prop] = item.data.get(prop)
-            item_list.append(item_dict)
-        resp['items'] = item_list
-        self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
-        setCachedCostcoCampaign(camp_id, self.response.body)
+        publishedCampEntity = models.PublishedCampaign.get_by_id(strCampVer)
+        if publishedCampEntity is None:
+            logging.error('There is version number in published version list, but not published campaign entity!')
+            resp = {'error': 'Internal error!'}
+        else:
+            resp = publishedCampEntity.campaign_data
+        self.response.body = json.dumps(resp, indent=4, separators=(',', ':'))
 
 
-def getCachedCostcoCampaign(major_version):
-    return memcache.get(major_version, namespace='costco',)
+def getCachedCostcoAllCampaignMajorVersions(requestType='str'):
+    """
+    Return a json string (requestType='str') or python list (requestType='list') which contains a array or list of
+    campaign major version number.
+    Ex:
+        Json string => '[ 600, 500, 300 ]' or
+        Python list => [ 600, 500, 300 ]
+    """
+    assert requestType in ['str', 'list'], "Unknown request type, only accept 'str' or 'list'."
+
+    verJsonStr = memcache.get('all-costco-campaign-major-version-list', namespace='costco')
+
+    if verJsonStr is None or len(verJsonStr) == 2:
+        return None
+
+    if requestType == 'str':
+        return verJsonStr
+    elif requestType == 'list':
+        return json.loads(verJsonStr)
 
 
-def setCachedCostcoCampaign(major_version, detail, time=86400):
-    memcache.set(major_version, detail, time=time, namespace='costco')
+def setCachedCostcoAllCampaignMajorVersions(verList_or_verStr):
+    """
+    Save a json string or python list which contains campaign major version number.
+    """
+    verJsonStr = None
+
+    if isinstance(verList_or_verStr, list):
+        verJsonStr = json.dumps(verList_or_verStr)
+    elif isinstance(verList_or_verStr, str):
+        verJsonStr = verList_or_verStr
+
+    verList = json.loads(verJsonStr)
+    assert len(verList) == 0 or isinstance(verList[0], int), 'Version is required to be integer number.'
+
+    if verJsonStr is not None and len(verJsonStr) > 2:
+        memcache.set('all-costco-campaign-major-version-list', verJsonStr, time=1440, namespace='costco')
 
 
-def rmCachedCostcoCampaign(major_version):
-    result = memcache.delete(major_version, namespace='costco')
-    if result == memcache.DELETE_NETWORK_FAILURE:
-        logging.error('DELETE NETWORK FAILURE')
-    elif result == memcache.DELETE_ITEM_MISSING:
-        logging.warning('DELETE ITEM MISSING')
+def appendCachedCostcoAllCampaignMajorVersions(intMajorVersion):
+    """
+    Append one int major version into memcache.
+    """
+    list = getCachedCostcoAllCampaignMajorVersions('list')
+    if list is None:
+        list = []
+    list.append(intMajorVersion)
+    setCachedCostcoAllCampaignMajorVersions(list)

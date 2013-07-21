@@ -24,11 +24,16 @@ from google.appengine.ext import ndb
 # local imports
 
 
-COSTCO_CAMPAIGN_VERSIONS = 'CostcoCampaignVersions'
+COSTCO_CAMPAIGN_MANAGER = 'CostcoCampaignManager'
 
 
-class CampaignVersion(ndb.Model):  # one entity
-    ver_list = ndb.IntegerProperty(repeated=True, indexed=False)
+class CampaignManager(ndb.Model):  # one entity
+    listPublishedVersions = ndb.IntegerProperty(repeated=True, indexed=False)
+    lastCreatedVersion = ndb.IntegerProperty(default=0, indexed=False)
+
+
+class PublishedCampaign(ndb.Model):
+    campaign_data = ndb.JsonProperty(required=True, indexed=False)
 
 
 class Campaign(ndb.Model):  # one major version, one entity, id=major version
@@ -36,8 +41,25 @@ class Campaign(ndb.Model):  # one major version, one entity, id=major version
     end = ndb.DateProperty(required=True)
     patch = ndb.IntegerProperty(default=0, indexed=False)
     published = ndb.BooleanProperty(default=False, indexed=False)
+    modified = ndb.BooleanProperty(default=False, indexed=False)
+    type = ndb.StringProperty(default='coupon', choices=['coupon', 'exhibition', 'preview', 'announcement'],
+                              indexed=False)
 
 
 class Item(ndb.Model):
     data = ndb.JsonProperty(required=True)
     campaignKey = ndb.KeyProperty(kind=Campaign, required=True)
+
+    @classmethod
+    def get_fields(cls, campaign_type='coupon'):
+        if campaign_type == 'coupon':
+            fields = ['url', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
+        elif campaign_type == 'exhibition':
+            fields = ['url', 'title', 'start', 'end', 'locations']
+        elif campaign_type == 'preview':
+            fields = ['url', 'brand', 'cname', 'ename', 'spec', 'code', 'price']
+        elif campaign_type == 'announcement':
+            fields = ['url', 'title', 'content']
+        else:
+            fields = []
+        return fields

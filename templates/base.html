@@ -31,15 +31,22 @@
         {% block navbar %}
         <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="navbar-inner">
-                <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-                    <span class="icon-chevron-down icon"></span>
-                </button>
-                <a class="brand" href="/">{{ app_name }}</a>
-                <div class="nav-collapse">
-                    <ul class="nav pull-right">
-                        <li><a href="#" target="_blank">About</a></li>
-                    </ul>
-                </div><!-- /.nav-collapse -->
+                <div class="container">
+                    <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+                    <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                        <span class="icon-chevron-down icon-white"></span>
+                    </button>
+                     <!-- Be sure to leave the brand out there if you want it shown -->
+                    <a class="brand" href="#">{{ app_name }}</a>
+                    <!-- Everything you want hidden at 940px or less, place within here -->
+                    <div class="nav-collapse collapse">
+                        <ul class="nav pull-right">
+                            {% block navbar_list_items %}
+                            <li><a href="#" target="_blank">About</a></li>
+                            {% endblock %}
+                        </ul>
+                    </div><!-- /.nav-collapse -->
+                </div><!-- /container -->
             </div><!-- /navbar-inner -->
         </div><!-- /navbar -->
         {% endblock %}
@@ -50,7 +57,7 @@
             {% if messages|safe %}
                 {% for message in messages %}
                 <p class="alert alert-{{ message[1]|safe }}">
-                    <a class="close" data-dismiss="alert">×</a>
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
                     {{ message[0]|safe }}
                 </p>
                 {% endfor %}

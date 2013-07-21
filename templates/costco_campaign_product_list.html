@@ -3,7 +3,7 @@
 {% block mediaCSS %}
 <style type="text/css">
 body {
-    padding-top: 50px;
+    padding-top: 60px;
 }
 
 .form-background {
@@ -15,59 +15,130 @@ body {
 </style>
 {% endblock mediaCSS %}
 
+{% block navbar_list_items %}
+    <li>
+        <div class="btn-group">
+            <a href="/costco/campaigns" class="btn">
+                <i class="icon-arrow-left"></i>
+                Back to campaign list
+            </a>
+        </div>
+        <div class="btn-group">
+            <button id="idNavbarBtnCampaignPublish" class={% if not campaign.modified %}"btn disabled" disabled="disabled"{% else %}"btn"{% endif %} data-toggle="modal" data-target="#idDlgConfirmPublishStateChanging">
+                <i class="icon-play"></i>Publish
+            </button>
+            <button id="idNavbarBtnCampaignUnpublish" class={% if not campaign.published %}"btn disabled" disabled="disabled"{% else %}"btn"{% endif %} data-toggle="modal" data-target="#idDlgConfirmPublishStateChanging">
+                <i class="icon-pause"></i>Unpublish
+            </button>
+        </div>
+    </li>
+{% endblock navbar_list_items %}
+
 {% block content %}
 <div id="myCreateForm"  class="collapse">
     <form class="form-horizontal form-background" action="{{ post_url }}" method="post" enctype="multipart/form-data">
         <fieldset>
-            <legend>Create New Product</legend>
+            <legend>Create New Product (Type: {{ campaign.type | capitalize }})</legend>
             <div class="control-group">
-                <label class="control-label">Image file:</label>
+                <label class="control-label" title="{{ campaign.type | capitalize }} image file to upload">Image file:</label>
                 <div class="controls">
                     <input type="file" name="file">
                 </div>
             </div>
+            {% if campaign.type == 'coupon' or campaign.type == 'preview' %}
             <div class="control-group">
-                <label class="control-label">Brand:</label>
+                <label class="control-label" title="Item brand name">Brand:</label>
                 <div class="controls">
                     <input type="text" name="brand" required>
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label">Chinese name:</label>
+                <label class="control-label" title="Item Chinese name">Chinese name:</label>
                 <div class="controls">
                     <input type="text" name="cname" required>
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label">English name:</label>
+                <label class="control-label" title="Item English name">English name:</label>
                 <div class="controls">
                     <input type="text" name="ename" required="">
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label">Model or Spec:</label>
+                <label class="control-label" title="Item spec or model name">Spec:</label>
                 <div class="controls">
-                    <input type="text" name="model_or_spec">
+                    <input type="text" name="spec">
                 </div>
             </div>
             <div class="control-group">
-                <label class="control-label">Costco Code:</label>
+                <label class="control-label" title="Costco coupon code">Costco Code:</label>
                 <div class="controls">
                     <input type="text" name="code">
                 </div>
             </div>
+            {% if campaign.type == 'coupon' %}
             <div class="control-group">
-                <label class="control-label">Discount:</label>
+                <label class="control-label" title="Item discount in this campaign">Discount:</label>
                 <div class="controls">
                     <input type="text" name="discount" required>
                 </div>
             </div>
+            {% endif %}
             <div class="control-group">
-                <label class="control-label">Original price:</label>
+                <label class="control-label" title="Item original price">Original price:</label>
                 <div class="controls">
-                    <input type="text" name="orig_price">
+                    <input type="text" name="price">
                 </div>
             </div>
+            {% elif campaign.type == 'exhibition' %}
+            <div class="control-group">
+                <label class="control-label" title="Exhibition title">Title:</label>
+                <div class="controls">
+                    <input class="input-xlarge" type="text" name="title" required>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" title="Exhibition start date">Start date</label>
+                <div class="controls">
+                    <input type="date" name="start" required>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" title="Exhibition end date">End date</label>
+                <div class="controls">
+                    <input type="date" name="end" required>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" title="Exhibition locations, multiple choices">Locations</label>
+                <div class="controls">
+                    <select multiple="multiple" name="locations" size="9" requried>
+                        <option value="Shihchih">汐止店</option>
+                        <option value="Neihu">內湖店</option>
+                        <option value="Chungho">中和店</option>
+                        <option value="Taoyuan">桃園店</option>
+                        <option value="Hsinchu">新竹店</option>
+                        <option value="Taichung">台中店</option>
+                        <option value="Tainan">台南店</option>
+                        <option value="Dashun">大順店</option>
+                        <option value="Kaohsiung">高雄店</option>
+                    </select>
+                </div>
+            </div>
+            {% elif campaign.type == 'announcement' %}
+            <div class="control-group">
+                <label class="control-label" title="Announcement title">Title:</label>
+                <div class="controls">
+                    <input class="input-xlarge" type="text" name="title" required>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label" title="Announcement detailed content">Content:</label>
+                <div class="controls">
+                    <textarea class="input-xxlarge" rows="5" name="content" required></textarea>
+                </div>
+            </div>
+            {% endif %}
             <div class="form-action">
                 <button type="submit" class="btn btn-primary">Create</button>
                 <button type="button" class="btn">Reset</button>
@@ -76,28 +147,23 @@ body {
     </form>
 </div>
 
-<h1>Product List
-    <a href="/costco/campaigns" class="btn btn-primary btn-mini"><i class="icon-arrow-up icon-white"></i>Back to campaign list</a>
-    <button id="idShowConfirmDlgBtn" class="btn btn-mini {% if campaign.published %}btn-success{% else %}btn-danger{% endif %}" data-toggle="modal" data-target="#confirmDlg"><i id="idShowConfirmDlgBtnIcon" class="{% if campaign.published %}icon-stop{% else %}icon-play{% endif %} icon-white"></i><span id="idShowConfirmDlgBtnText">{% if campaign.published %}{{ str_btn_disable_publish }}{% else %}{{ str_btn_enable_publish }}{% endif %}</span></button>
-    <div id="confirmDlg" class="modal hide fade">
-        <div class="modal-header">
-            <button class="close" data-dismiss="modal">&times;</button>
-            <h3>Confirm</h3>
-        </div>
-        <div class="modal-body">
-            <h4 id="idConfirmDlgBodyText">
-                {% if campaign.published %}
-                    {{ str_confirm_disable_publish }}
-                {% else %}
-                    {{ str_confirm_enable_publish }}
-                {% endif %}
-            </h4>
-        </div>
-        <div class="modal-footer">
-            <button class="btn" data-dismiss="modal">No</button>
-            <button class="btn btn-primary" data-dismiss="modal" id="confirmTogglePublishBtn">Yes</button>
-        </div>
+<!-- modal dialog to confirm campaign publish state changing, trigger at navbar buttons -->
+<div id="idDlgConfirmPublishStateChanging" class="modal hide fade">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h3>Changing publish state?</h3>
     </div>
+    <div class="modal-body">
+        <div id="idTextConfirmPublishStateChanging"></div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn" data-dismiss="modal" id="idBtnCancelPublishStateChangine">Cancel</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" id="idBtnConfirmPublishStateChanging">Confirm</button>
+    </div>
+</div>
+
+<h1>Product List <small>{{ campaign.type | capitalize }}</small>
+    <span class="label label-important" id="idLabelImportantNotification">{% if campaign.published and campaign.modified %}Need re-publish{% endif %}</span>
     <button type="button" id="showHideBtn" class="btn btn-info pull-right" data-toggle="collapse" data-target="#myCreateForm">
         <i id="btnIcon" class="icon-chevron-down icon-white"></i><span id="btnText">Show form</span>
     </button>
@@ -109,13 +175,25 @@ body {
         <tr>
             <th>#</th>
             <th>Image</th>
+            {% if campaign.type == 'coupon' or campaign.type == 'preview' %}
             <th>Brand</th>
             <th>CName</th>
             <th>EName</th>
-            <th>Model or Spec</th>
+            <th>Spec</th>
             <th>Costco Code</th>
+            {% if campaign.type == 'coupon' %}
             <th>Discount</th>
+            {% endif %}
             <th>Original Price</th>
+            {% elif campaign.type == 'exhibition' %}
+            <th>Title</th>
+            <th>Start date</th>
+            <th>End date</th>
+            <th>Locations</th>
+            {% elif campaign.type == 'announcement' %}
+            <th>Title</th>
+            <th>Content</th>
+            {% endif %}
         </tr>
     </thead>
     <tbody>
@@ -123,13 +201,29 @@ body {
         <tr>
             <td>{{ loop.index }}</td>
             <td><img src="{{ prod['url'] }}=s300"></td>
+            {% if campaign.type == 'coupon' or campaign.type == 'preview' %}
             <td>{{ prod['brand'] }}</td>
             <td>{{ prod['cname'] }}</td>
             <td>{{ prod['ename'] }}</td>
-            <td>{{ prod['model_or_spec'] }}</td>
+            <td>{{ prod['spec'] }}</td>
             <td>{{ prod['code'] }}</td>
+            {% if campaign.type == 'coupon' %}
             <td>{{ prod['discount'] }}</td>
-            <td>{{ prod['orig_price'] }}</td>
+            {% endif %}
+            <td>{{ prod['price'] }}</td>
+            {% elif campaign.type == 'exhibition' %}
+            <td>{{ prod['title'] }}</td>
+            <td>{{ prod['start'] }}</td>
+            <td>{{ prod['end'] }}</td>
+            <td>
+                {% for loc in prod['locations'] %}
+                    {{ loc }}{% if not loop.last %}<br>{% endif %}
+                {% endfor %}
+            </td>
+            {% elif campaign.type == 'announcement' %}
+            <td>{{ prod['title'] }}</td>
+            <td>{{ prod['content'] }}</td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>
@@ -140,47 +234,57 @@ body {
 {% block mediaJS %}
 <script type="text/javascript">
 $('#myCreateForm').on('shown', function() {
+    log('Product item create form is shown.');
     $('#btnText').text('Hide form');
     $('#btnIcon').removeClass('icon-chevron-down').addClass('icon-chevron-up');
 })
 $('#myCreateForm').on('hidden', function() {
+    log('Product item create form is hidden.');
     $('#btnText').text('Show form');
     $('#btnIcon').removeClass('icon-chevron-up').addClass('icon-chevron-down');
 })
-$('#confirmTogglePublishBtn').on('click', function() {
+$('#idNavbarBtnCampaignPublish').on('click', function(){
+    log('Prepare to publish campaign.');
+    $('#idTextConfirmPublishStateChanging').text('Are you sure you want to publish this campaign?');
+})
+$('#idNavbarBtnCampaignUnpublish').on('click', function(){
+    log('Prepare to unpublish campaign.')
+    $('#idTextConfirmPublishStateChanging').text('Are you sure you want to unpublish this campaign?');
+})
+$('#idBtnCancelPublishStateChangine').on('click', function(){
+    log('Cancel campaign publish state change!');
+})
+$('#idBtnConfirmPublishStateChanging').on('click', function(){
     var publish;
-    var str_confirm = $('#idShowConfirmDlgBtn').text();
-    if (str_confirm == "{{ str_btn_enable_publish }}") {
-        publish = true;
-    } else if (str_confirm == "{{ str_btn_disable_publish }}") {
+    var str_confirm = $('#idTextConfirmPublishStateChanging').text();
+    if (~str_confirm.indexOf("unpublish")) {
+        log('Ready to unpublish campaign.');
         publish = false;
+    } else if (~str_confirm.indexOf("publish")) {
+        log('Ready to publish campaign.');
+        publish = true;
     } else {
-        return false;
+        return;
     }
 
-    var url = "/costco/campaign/{{ campaign.key.id() }}/edit";
+    var version = {{ campaign.key.id() }} + {{ campaign.patch }};
+    var url = "/costco/campaign/" + version + "/edit";
     $.post(url, {'publish': publish}, function(){
         if (publish) {
-            log('Campaign publish state changed. Now: enabled.');
-            $('#idShowConfirmDlgBtn').removeClass('btn-danger').addClass('btn-success');
-            $('#idShowConfirmDlgBtnIcon').removeClass('icon-play').addClass('icon-stop');
-            $('#idShowConfirmDlgBtnText').text('{{ str_btn_disable_publish }}');
-            $('#idConfirmDlgBodyText').text('{{ str_confirm_disable_publish }}');
+            log('Campaign publish completed!');
+            $('#idNavbarBtnCampaignPublish').addClass('disabled');
+            $('#idNavbarBtnCampaignUnpublish').removeClass('disabled');
+            document.getElementById('idNavbarBtnCampaignPublish').setAttribute('disabled', 'disabled');
+            document.getElementById('idNavbarBtnCampaignUnpublish').removeAttribute('disabled');
         } else {
-            log('Campaign publish state changed. Now: disabled.');
-            $('#idShowConfirmDlgBtn').removeClass('btn-success').addClass('btn-danger');
-            $('#idShowConfirmDlgBtnIcon').removeClass('icon-stop').addClass('icon-play');
-            $('#idShowConfirmDlgBtnText').text('{{ str_btn_enable_publish }}');
-            $('#idConfirmDlgBodyText').text('{{ str_confirm_enable_publish }}');
+            log('Campaign unpublish completed!');
+            $('#idNavbarBtnCampaignUnpublish').addClass('disabled');
+            $('#idNavbarBtnCampaignPublish').removeClass('disabled');
+            document.getElementById('idNavbarBtnCampaignUnpublish').setAttribute('disabled', 'disabled');
+            document.getElementById('idNavbarBtnCampaignPublish').removeAttribute('disabled');
         }
     });
 })
-$('#confirmTogglePublishBtn').on('click', function() {
-    var xmlhttp = new XMLHttpRequest();
-    /*xmlhttp.onreadystatechange = function() {}*/
-    xmlhttp.open("POST", "/costco/campaign/{{ campaign.key.id() }}/toggle_publish", true);
-    xmlhttp.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-    xmlhttp.send();
-})
+
 </script>
 {% endblock %}
