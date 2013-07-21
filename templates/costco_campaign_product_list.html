@@ -164,7 +164,7 @@
     </div>
 </div>
 
-<h1>Product List <small>{{ campaign.type | capitalize }}</small>
+<h1>{{ campaign.type | capitalize }} <small id="idTextVersion">{{ campaign.key.id()|int + campaign.patch }}</small>
     <span class="label label-important" id="idLabelImportantNotification">{% if campaign.published and campaign.modified %}Need re-publish{% endif %}</span>
     <button type="button" id="showHideBtn" class="btn btn-info pull-right" data-toggle="collapse" data-target="#myCreateForm">
         <i id="btnIcon" class="icon-chevron-down icon-white"></i><span id="btnText">Show form</span>
@@ -278,6 +278,11 @@ $('#idBtnConfirmPublishStateChanging').on('click', function(){
             $('#idNavbarBtnCampaignUnpublish').removeClass('disabled');
             document.getElementById('idNavbarBtnCampaignPublish').setAttribute('disabled', 'disabled');
             document.getElementById('idNavbarBtnCampaignUnpublish').removeAttribute('disabled');
+            /* advance campaign version */
+            var new_ver = parseInt($('#idTextVersion').text(), 10) + 1
+            $('#idTextVersion').text(new_ver.toString())
+            /* empty notification label */
+            $('#idLabelImportantNotification').text('')
         } else {
             log('Campaign unpublish completed!');
             $('#idNavbarBtnCampaignUnpublish').addClass('disabled');
