@@ -75,7 +75,7 @@
     </thead>
     <tbody>
         {% for campaign in campaigns %}
-        <tr onclick="self.location='/costco/campaign/{{ campaign.ver }}'">
+        <tr onclick="self.location='/costco/campaign/{{ campaign.majorVer }}'">
             <td>{{ loop.index }}<i class="icon-{% if campaign.published and not campaign.modified %}play{% elif campaign.published and campaign.modified %}flag{% else %}pause{% endif %}"></i></td>
             <td>{{ campaign.ver }}</td>
             <td>{{ campaign.type }}</td>

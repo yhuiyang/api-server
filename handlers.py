@@ -110,6 +110,7 @@ class CostcoCreateAndListCampaign(BaseHandler):
             campaign['modified'] = campEntity.modified
             campaign['ver'] = majorVerInt + campEntity.patch
             campaign['type'] = campEntity.type
+            campaign['majorVer'] = majorVerInt
             campaigns.append(campaign)
 
         #logging.debug(campaigns)
