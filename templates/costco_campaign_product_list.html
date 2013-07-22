@@ -269,9 +269,11 @@ $('#idBtnConfirmPublishStateChanging').on('click', function(){
         return;
     }
 
-    var version = {{ campaign.key.id() }} + {{ campaign.patch }};
-    var url = "/costco/campaign/" + version + "/edit";
-    $.post(url, {'publish': publish}, function(){
+    $.ajax({
+        type: "PUT",
+        url: "/costco/campaign/{{ campaign.key.id() }}",
+        data: {publish: publish}
+    }).done(function(){
         if (publish) {
             log('Campaign publish completed!');
             $('#idNavbarBtnCampaignPublish').addClass('disabled');
@@ -290,6 +292,9 @@ $('#idBtnConfirmPublishStateChanging').on('click', function(){
             document.getElementById('idNavbarBtnCampaignUnpublish').setAttribute('disabled', 'disabled');
             document.getElementById('idNavbarBtnCampaignPublish').removeAttribute('disabled');
         }
+    }).fail(function(){
+        /* TODO: show some error */
+    }).always(function(){
     });
 })
 

@@ -232,10 +232,7 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
 
         self.redirect_to('costco-create-and-list-campaign-product', camp_id=camp_id)
 
-
-class CostcoCampaignEdit(BaseHandler):
-
-    def post(self, camp_id):
+    def put(self, camp_id):
 
         if not users.is_current_user_admin():
             self.abort(403)
