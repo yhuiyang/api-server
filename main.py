@@ -31,10 +31,10 @@ _config = {}
 _routes = [
     RedirectRoute(r'/', redirect_to='dashboard', name='home', strict_slash=True),
     RedirectRoute(r'/dashboard', handler=handlers.Dashboard, name='dashboard', strict_slash=True),
-    RedirectRoute(r'/costco/campaign/<camp_id:[1-9]\d*>', handler=handlers.CostcoCreateAndListCampaignProduct,
-                  name='costco-create-and-list-campaign-product', strict_slash=True),
-    RedirectRoute(r'/costco/campaigns', handler=handlers.CostcoCreateAndListCampaign,
-                  name='costco-create-and-list-campaign', strict_slash=True),
+    RedirectRoute(r'/costco/campaign/<camp_id:[1-9]\d*>', handler=handlers.CostcoCampaignItemCRUD,
+                  name='costco-campaign-item-crud', strict_slash=True),
+    RedirectRoute(r'/costco/campaigns', handler=handlers.CostcoCampaignCRUD,
+                  name='costco-campaign-crud', strict_slash=True),
     webapp2.Route(r'/costco-api/whatsnew', handler=handlers.ApiCostcoWhatsNew),
     webapp2.Route(r'/costco-api/campaign/<camp_id:[1-9]\d*>', handlers.ApiCostcoCampaignDetail),
 ]

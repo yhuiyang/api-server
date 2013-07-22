@@ -71,7 +71,7 @@ class Dashboard(BaseHandler):
         self.render_response("dashboard.html", **params)
 
 
-class CostcoCreateAndListCampaign(BaseHandler):
+class CostcoCampaignCRUD(BaseHandler):
 
     def getAllCampaignMajorVersionList(self):
         """
@@ -155,10 +155,10 @@ class CostcoCreateAndListCampaign(BaseHandler):
         # update memcache
         appendCachedCostcoAllCampaignMajorVersions(newVer)
 
-        self.redirect_to('costco-create-and-list-campaign')
+        self.redirect_to('costco-campaign-crud')
 
 
-class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
+class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
 
     @admin_required
     def get(self, camp_id):
@@ -180,7 +180,7 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
 
         # the url to post to blobstore is dynamically generated, when blobstore saving completed, GAE will invoke
         # our callback which was setup in blobstore.create_upload_url(THIS_IS_APP_POST_CALLBACK_URL)
-        myPostHandlerUrl = self.uri_for('costco-create-and-list-campaign-product', camp_id=camp_id)
+        myPostHandlerUrl = self.uri_for('costco-campaign-item-crud', camp_id=camp_id)
         params = {
             'app_name': 'Costco',
             'campaign': campaignEntity,
@@ -230,7 +230,7 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
         # update datastore
         ndb.put_multi([item, campaignEntity])
 
-        self.redirect_to('costco-create-and-list-campaign-product', camp_id=camp_id)
+        self.redirect_to('costco-campaign-item-crud', camp_id=camp_id)
 
     def put(self, camp_id):
 
