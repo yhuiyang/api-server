@@ -26,7 +26,7 @@
             </a>
         </div>
         <div class="btn-group">
-            <button id="idNavbarBtnCampaignPublish" class={% if not campaign.modified %}"btn disabled" disabled="disabled"{% else %}"btn"{% endif %} data-toggle="modal" data-target="#idDlgConfirmPublishStateChanging">
+            <button id="idNavbarBtnCampaignPublish" class={% if (not campaign.modified and campaign.published) or not products %}"btn disabled" disabled="disabled"{% else %}"btn"{% endif %} data-toggle="modal" data-target="#idDlgConfirmPublishStateChanging">
                 <i class="icon-play"></i>Publish
             </button>
             <button id="idNavbarBtnCampaignUnpublish" class={% if not campaign.published %}"btn disabled" disabled="disabled"{% else %}"btn"{% endif %} data-toggle="modal" data-target="#idDlgConfirmPublishStateChanging">
@@ -279,7 +279,7 @@ $('#idBtnConfirmPublishStateChanging').on('click', function(){
             document.getElementById('idNavbarBtnCampaignPublish').setAttribute('disabled', 'disabled');
             document.getElementById('idNavbarBtnCampaignUnpublish').removeAttribute('disabled');
             /* advance campaign version */
-            var new_ver = parseInt($('#idTextVersion').text(), 10) + 1
+            var new_ver = parseInt($('#idTextVersion').text(), 10){% if campaign.modified %} + 1;{% else %};{% endif %}
             $('#idTextVersion').text(new_ver.toString())
             /* empty notification label */
             $('#idLabelImportantNotification').text('')

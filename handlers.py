@@ -252,10 +252,12 @@ class CostcoCampaignEdit(BaseHandler):
 
             if request_publish == 'true':  # do publish
 
+                patchAdvance = True
+
                 # check if modification happened
                 if campaignEntity.modified is False:
-                    logging.warning('Request publish a non-modification campaign, skip action!')
-                    self.abort(406)  # not acceptable
+                    logging.warning('Request publish a non-modification campaign, patch will not be advanced!')
+                    patchAdvance = False
 
                 # retrieve campaign manager
                 campMgrEntity = models.CampaignManager.get_or_insert(models.COSTCO_CAMPAIGN_MANAGER)
@@ -268,7 +270,8 @@ class CostcoCampaignEdit(BaseHandler):
                         logging.error('Remove non-exist version(%d) from published version list.' % intCampVer)
 
                 # update campaign fields
-                campaignEntity.patch += 1
+                if patchAdvance:
+                    campaignEntity.patch += 1
                 campaignEntity.modified = False
                 campaignEntity.published = True
 
@@ -298,7 +301,7 @@ class CostcoCampaignEdit(BaseHandler):
 
                 # check if already published
                 if campaignEntity.published is False:
-                    logging.warning('Request un-publish a un-published campaign, skip action!')
+                    logging.warning('Request un-publish a not-yet-published campaign, skip action!')
                     self.abort(406)  # not acceptable
 
                 # retrieve campaign manager
