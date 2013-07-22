@@ -35,7 +35,7 @@ _routes = [
                   name='costco-create-and-list-campaign-product', strict_slash=True),
     RedirectRoute(r'/costco/campaigns', handler=handlers.CostcoCreateAndListCampaign,
                   name='costco-create-and-list-campaign', strict_slash=True),
-    webapp2.Route(r'/costco-api/campaign/whatsnew', handler=handlers.ApiCostcoCampaignWhatsNew),
+    webapp2.Route(r'/costco-api/whatsnew', handler=handlers.ApiCostcoWhatsNew),
     webapp2.Route(r'/costco-api/campaign/<camp_id:[1-9]\d*>', handlers.ApiCostcoCampaignDetail),
 ]
 

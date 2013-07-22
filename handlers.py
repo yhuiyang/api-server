@@ -318,7 +318,7 @@ class CostcoCreateAndListCampaignProduct(BaseHandler, blobstore_handlers.Blobsto
         # edit xxx...
 
 
-class ApiCostcoCampaignWhatsNew(BaseHandler):
+class ApiCostcoWhatsNew(BaseHandler):
 
     def get(self):
 
