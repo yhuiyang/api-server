@@ -174,8 +174,11 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
         product_list = []
         for item in allItems:
             product = {}
-            for n in models.Item.get_fields(campaignEntity.type):
-                product[n] = item.data.get(n)
+            for n in models.Item.get_web_fields(campaignEntity.type):
+                if n == 'urlsafe':
+                    product[n] = item.key.urlsafe()
+                else:
+                    product[n] = item.data.get(n)
             product_list.append(product)
 
         # the url to post to blobstore is dynamically generated, when blobstore saving completed, GAE will invoke
@@ -196,24 +199,32 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
 
         upload_files = self.get_uploads('file')
         blob_info = upload_files[0]
+        blob_key = blob_info.key()
 
         data_dict = dict()
         # collect item image meta data
-        data_dict['url'] = images.get_serving_url(blob_info.key())
         # blobstore.BlobInfo.properties() = set(['creation', 'content_type', 'md5_hash', 'size', 'fielname'])
-        data_dict['creation'] = blob_info.creation.isoformat()
-        data_dict['content_type'] = blob_info.content_type
-        data_dict['md5_hash'] = blob_info.md5_hash
-        data_dict['size'] = blob_info.size
-        data_dict['filename'] = blob_info.filename
+        for prop in models.Item.get_blob_fields():
+            if prop == 'url':
+                data_dict[prop] = images.get_serving_url(blob_key)
+            elif prop == 'creation':
+                data_dict[prop] = blob_info.creation.isoformat()
+            elif prop == 'content_type':
+                data_dict[prop] = blob_info.content_type
+            elif prop == 'md5_hash':
+                data_dict[prop] = blob_info.md5_hash
+            elif prop == 'size':
+                data_dict[prop] = blob_info.size
+            elif prop == 'filename':
+                data_dict[prop] = blob_info.filename
+            elif prop == 'blob_key':
+                data_dict[prop] = str(blob_key)
 
         # collect item info
         int_camp_id = int(camp_id)
         camp_key = str((int_camp_id / 100) * 100)
         campaignEntity = models.Campaign.get_by_id(camp_key)
-        for prop in models.Item.get_fields(campaignEntity.type):
-            if prop == 'url':  # skip 'url' setting, it has already set done.
-                continue
+        for prop in models.Item.get_user_fields(campaignEntity.type):
             if prop == 'locations':
                 data_dict[prop] = self.request.get_all(prop)
             else:
@@ -316,6 +327,32 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
                 ndb.put_multi([campMgrEntity, campaignEntity])
 
         # edit xxx...
+
+    def delete(self, camp_id):
+
+        if not users.is_current_user_admin():
+            self.abort(403)
+
+        # delete image in blobstore & serving url
+        strBlobKey = self.request.get('blob_key')
+        if strBlobKey:
+            images.delete_serving_url(strBlobKey)
+            blobInfo = blobstore.BlobInfo.get(strBlobKey)
+            if blobInfo is not None:
+                blobInfo.delete()
+
+        # delete item in datastore
+        strItemKey = self.request.get('item_key')
+        if strItemKey:
+            ndb.Key(urlsafe=strItemKey).delete()
+            intCampId = int(camp_id)
+            keyCampId = str((intCampId / 100) * 100)
+            campaignEntity = models.Campaign.get_by_id(keyCampId)
+            # mark campaign dirty
+            if campaignEntity is not None:
+                campaignEntity.modified = True
+                campaignEntity.put()
+                self.redirect_to('costco-campaign-item-crud', camp_id=camp_id)
 
 
 class ApiCostcoWhatsNew(BaseHandler):

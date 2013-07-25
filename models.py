@@ -51,15 +51,34 @@ class Item(ndb.Model):
     campaignKey = ndb.KeyProperty(kind=Campaign, required=True)
 
     @classmethod
-    def get_fields(cls, campaign_type='coupon'):
+    def get_user_fields(cls, campaign_type='coupon'):
         if campaign_type == 'coupon':
-            fields = ['url', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
+            fields = ['brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
         elif campaign_type == 'exhibition':
-            fields = ['url', 'title', 'start', 'end', 'locations']
+            fields = ['title', 'start', 'end', 'locations']
         elif campaign_type == 'preview':
-            fields = ['url', 'brand', 'cname', 'ename', 'spec', 'code', 'price']
+            fields = ['brand', 'cname', 'ename', 'spec', 'code', 'price']
         elif campaign_type == 'announcement':
-            fields = ['url', 'title', 'content']
+            fields = ['title', 'content']
+        else:
+            fields = []
+        return fields
+
+    @classmethod
+    def get_blob_fields(cls):
+        fields = ['url', 'creation', 'content_type', 'md5_hash', 'size', 'filename', 'blob_key']
+        return fields
+
+    @classmethod
+    def get_web_fields(cls, campaign_type='coupon'):
+        if campaign_type == 'coupon':
+            fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
+        elif campaign_type == 'exhibition':
+            fields = ['url', 'blob_key', 'urlsafe', 'title', 'start', 'end', 'locations']
+        elif campaign_type == 'preview':
+            fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'price']
+        elif campaign_type == 'announcement':
+            fields = ['url', 'blob_key', 'urlsafe', 'title', 'content']
         else:
             fields = []
         return fields
