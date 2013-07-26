@@ -291,7 +291,10 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
                 camp_data['items'] = []
                 allCampItems = models.Item.get_campaign_items(camp_id)
                 for item in allCampItems:
-                    camp_data['items'].append(item.data)
+                    item_published_data = dict()
+                    for prop in models.Item.get_published_fields(campaignEntity.type):
+                        item_published_data[prop] = item.data[prop]
+                    camp_data['items'].append(item_published_data)
 
                 publishedCampEntity = models.PublishedCampaign(id=str(intCampVer))
                 publishedCampEntity.campaign_data = camp_data

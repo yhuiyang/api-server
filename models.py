@@ -63,6 +63,9 @@ class Item(ndb.Model):
 
     @classmethod
     def get_user_fields(cls, campaign_type='coupon'):
+        """
+        Fields provided by user input
+        """
         if campaign_type == 'coupon':
             fields = ['brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
         elif campaign_type == 'exhibition':
@@ -77,11 +80,17 @@ class Item(ndb.Model):
 
     @classmethod
     def get_blob_fields(cls):
+        """
+        Fields provided by blobstore and image service
+        """
         fields = ['url', 'creation', 'content_type', 'md5_hash', 'size', 'filename', 'blob_key']
         return fields
 
     @classmethod
     def get_web_fields(cls, campaign_type='coupon'):
+        """
+        Fields used on web management page
+        """
         if campaign_type == 'coupon':
             fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
         elif campaign_type == 'exhibition':
@@ -90,6 +99,23 @@ class Item(ndb.Model):
             fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'price']
         elif campaign_type == 'announcement':
             fields = ['url', 'blob_key', 'urlsafe', 'title', 'content']
+        else:
+            fields = []
+        return fields
+
+    @classmethod
+    def get_published_fields(cls, campaign_type='coupon'):
+        """
+        Fields used by the app client
+        """
+        if campaign_type == 'coupon':
+            fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
+        elif campaign_type == 'exhibition':
+            fields = ['url', 'filename', 'title', 'start', 'end', 'locations']
+        elif campaign_type == 'preview':
+            fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'price']
+        elif campaign_type == 'announcement':
+            fields = ['url', 'filename', 'title', 'content']
         else:
             fields = []
         return fields
