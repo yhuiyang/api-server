@@ -352,7 +352,7 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
             if campaignEntity is not None:
                 campaignEntity.modified = True
                 campaignEntity.put()
-                self.redirect_to('costco-campaign-item-crud', camp_id=camp_id, _code=303)
+                # self.redirect_to('costco-campaign-item-crud', camp_id=camp_id, _code=303)  # move redirect to client
 
 
 class ApiCostcoWhatsNew(BaseHandler):

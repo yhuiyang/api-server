@@ -337,6 +337,7 @@ $('#idBtnConfirmDeleteItem').on('click', function(){
         url: "/costco/campaign/{{ campaign.key.id() }}?item_key=" + urlsafe + "&blob_key=" + blobkey,
     }).done(function(){
         log("Delete done.");
+        window.location.replace("/costco/campaign/{{ campaign.key.id() }}");
     }).fail(function(){
         log("Delete failed.");
     }).always(function(){
