@@ -238,7 +238,7 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
         # update datastore
         ndb.put_multi([item, campaignEntity])
 
-        self.redirect_to('costco-campaign-item-crud', camp_id=camp_id)
+        self.redirect_to('costco-campaign-item-crud', camp_id=camp_id, _code=303)
 
     def put(self, camp_id):
 
@@ -349,7 +349,7 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
             if campaignEntity is not None:
                 campaignEntity.modified = True
                 campaignEntity.put()
-                self.redirect_to('costco-campaign-item-crud', camp_id=camp_id)
+                self.redirect_to('costco-campaign-item-crud', camp_id=camp_id, _code=303)
 
 
 class ApiCostcoWhatsNew(BaseHandler):
