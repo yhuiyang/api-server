@@ -48,7 +48,18 @@ class Campaign(ndb.Model):  # one major version, one entity, id=major version
 
 class Item(ndb.Model):
     data = ndb.JsonProperty(required=True)
-    campaignKey = ndb.KeyProperty(kind=Campaign, required=True)
+
+    @classmethod
+    def get_campaign_items(cls, camp_version):
+        if isinstance(camp_version, str):
+            intCampVersion = int(camp_version)
+            intCampMajorVer = (intCampVersion / 100) * 100
+        elif isinstance(camp_version, int):
+            intCampMajorVer = (camp_version / 100) * 100
+        else:
+            return None
+
+        return Item.query(ancestor=ndb.Key(Campaign, str(intCampMajorVer)))
 
     @classmethod
     def get_user_fields(cls, campaign_type='coupon'):

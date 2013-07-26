@@ -164,12 +164,10 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
     def get(self, camp_id):
 
         # find all items belongs to this campaign
-        int_camp_id = int(camp_id)
-        camp_key = str((int_camp_id / 100) * 100)
-        campaignKey = ndb.Key(models.Campaign, camp_key)
-        allItems = models.Item.query(models.Item.campaignKey == campaignKey)
+        allItems = models.Item.get_campaign_items(camp_id)
 
         # populate product_list for later rendering
+        campaignKey = ndb.Key(models.Campaign, str((int(camp_id) / 100) * 100))
         campaignEntity = campaignKey.get()
         product_list = []
         for item in allItems:
@@ -234,8 +232,7 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
         campaignEntity.modified = True
 
         # create new item in datastore
-        item = models.Item()
-        item.campaignKey = campaignEntity.key
+        item = models.Item(parent=campaignEntity.key)
         item.data = data_dict
 
         # update datastore
@@ -292,7 +289,7 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
                 camp_data['end'] = campaignEntity.end.isoformat()
                 camp_data['type'] = campaignEntity.type
                 camp_data['items'] = []
-                allCampItems = models.Item.query(models.Item.campaignKey == campaignKey)
+                allCampItems = models.Item.get_campaign_items(camp_id)
                 for item in allCampItems:
                     camp_data['items'].append(item.data)
 
