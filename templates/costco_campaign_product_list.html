@@ -204,7 +204,7 @@
             <td style="text-align:center; width:28px;">{{ loop.index }}
                 <div class="btn-group btn-group-vertical" id="opBtnGrp{{ loop.index }}" style="display: none;">
                     <button type="button" class="btn btn-mini"><i class="icon-edit"></i></button>
-                    <button type="button" class="btn btn-mini clsConfirmDeleteItem" data-toggle="modal" data-target="#idDlgConfirmDeleteItem" data-cname-or-title="{{ prod['cname'] if prod['cname'] else prod['title'] }}" data-urlsafe="{{ prod.urlsafe }}" data-blobkey="{{ prod.blob_key }}"><i class="icon-trash"></i></button>
+                    <button type="button" class="btn btn-mini clsBtnAskDeleteItem" data-toggle="modal" data-target="#idDlgConfirmDeleteItem" data-cname-or-title="{{ prod['cname'] if prod['cname'] else prod['title'] }}" data-urlsafe="{{ prod.urlsafe }}" data-blobkey="{{ prod.blob_key }}"><i class="icon-trash"></i></button>
                 </div>
             </td>
             <td><img src="{{ prod['url'] }}=s300"></td>
@@ -317,7 +317,7 @@ $('#idBtnConfirmPublishStateChanging').on('click', function(){
     }).always(function(){
     });
 })
-$('.clsConfirmDeleteItem').on('click', function(){
+$('.clsBtnAskDeleteItem').on('click', function(){
     var cname_or_title = $(this).data('cname-or-title');
     log("Prepare to delete item: " + cname_or_title);
     $('#idTextConfirmDeleteItem').text("Are you sure you want to delete " + cname_or_title + "?");
