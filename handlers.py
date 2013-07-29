@@ -249,10 +249,14 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
         strCampMajorVer = str(intCampMajorVer)
         campaignKey = ndb.Key(models.Campaign, strCampMajorVer)
 
-        # edit publish state
+        campaignEntity = campaignKey.get()
+        if campaignEntity is None:
+            logging.error('Invalid campaign id.')
+            self.abort(404)
+
+        # edit campaign publish state
         request_publish = self.request.get('publish')
         if request_publish is not None and request_publish in ['true', 'false']:
-            campaignEntity = campaignKey.get()
             intCampVer = intCampMajorVer + campaignEntity.patch
 
             if request_publish == 'true':  # do publish
@@ -326,7 +330,31 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
                 # update data store
                 ndb.put_multi([campMgrEntity, campaignEntity])
 
-        # edit xxx...
+            return
+
+        # edit campaign item property
+        urlsafeKey = self.request.get('urlsafe')
+        if len(urlsafeKey) == 0:
+            logging.error("Request doesn't contain a valid item urlsafe key.")
+            self.abort(404)
+
+        itemKey = ndb.Key(urlsafe=urlsafeKey)
+        itemEntity = itemKey.get()
+        if itemEntity is None:
+            logging.error('Request urlsafe is invalid.')
+            self.abort(404)
+
+        item_data = itemEntity.data
+        for prop in models.Item.get_user_fields(campaignEntity.type):
+            old = item_data[prop]
+            if prop in ['locations']:
+                new = self.request.get_all('locations[]')
+            else:
+                new = self.request.get(prop)
+            item_data[prop] = new
+            logging.debug('Property %s: old [%s], new [%s]' % (prop, old, new))
+
+        itemEntity.put()
 
     def delete(self, camp_id):
 

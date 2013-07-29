@@ -203,33 +203,33 @@
         <tr onmouseover="document.getElementById('opBtnGrp{{ loop.index }}').style.display = 'block';" onmouseout="document.getElementById('opBtnGrp{{ loop.index }}').style.display = 'none';">
             <td style="text-align:center; width:28px;">{{ loop.index }}
                 <div class="btn-group btn-group-vertical" id="opBtnGrp{{ loop.index }}" style="display: none;">
-                    <button type="button" class="btn btn-mini"><i class="icon-edit"></i></button>
-                    <button type="button" class="btn btn-mini clsBtnAskDeleteItem" data-toggle="modal" data-target="#idDlgConfirmDeleteItem" data-cname-or-title="{{ prod['cname'] if prod['cname'] else prod['title'] }}" data-urlsafe="{{ prod.urlsafe }}" data-blobkey="{{ prod.blob_key }}"><i class="icon-trash"></i></button>
+                    <button type="button" class="btn btn-mini clsBtnAskEditItem" data-toggle="modal" data-target="#idDlgEditItem" data-urlsafe="{{ prod.urlsafe }}" title="Edit"><i class="icon-edit"></i></button>
+                    <button type="button" class="btn btn-mini clsBtnAskDeleteItem" data-toggle="modal" data-target="#idDlgConfirmDeleteItem" data-cname-or-title="{{ prod['cname'] if prod['cname'] else prod['title'] }}" data-urlsafe="{{ prod.urlsafe }}" data-blobkey="{{ prod.blob_key }}" title="Delete"><i class="icon-trash"></i></button>
                 </div>
             </td>
             <td><img src="{{ prod['url'] }}=s300"></td>
             {% if campaign.type == 'coupon' or campaign.type == 'preview' %}
-            <td>{{ prod['brand'] }}</td>
-            <td>{{ prod['cname'] }}</td>
-            <td>{{ prod['ename'] }}</td>
-            <td>{{ prod['spec'] }}</td>
-            <td>{{ prod['code'] }}</td>
+            <td class="item-brand">{{ prod['brand'] }}</td>
+            <td class="item-cname">{{ prod['cname'] }}</td>
+            <td class="item-ename">{{ prod['ename'] }}</td>
+            <td class="item-spec">{{ prod['spec'] }}</td>
+            <td class="item-code">{{ prod['code'] }}</td>
             {% if campaign.type == 'coupon' %}
-            <td>{{ prod['discount'] }}</td>
+            <td class="item-discount">{{ prod['discount'] }}</td>
             {% endif %}
-            <td>{{ prod['price'] }}</td>
+            <td class="item-price">{{ prod['price'] }}</td>
             {% elif campaign.type == 'exhibition' %}
-            <td>{{ prod['title'] }}</td>
-            <td>{{ prod['start'] }}</td>
-            <td>{{ prod['end'] }}</td>
-            <td>
-                {% for loc in prod['locations'] %}
-                    {{ loc }}{% if not loop.last %}<br>{% endif %}
-                {% endfor %}
+            <td class="item-title">{{ prod['title'] }}</td>
+            <td class="item-start">{{ prod['start'] }}</td>
+            <td class="item-end">{{ prod['end'] }}</td>
+            <td class="item-locations">
+                {%- for loc in prod['locations'] -%}
+                    {{ loc }}{% if not loop.last %} <br>{% endif %}
+                {%- endfor -%}
             </td>
             {% elif campaign.type == 'announcement' %}
-            <td>{{ prod['title'] }}</td>
-            <td>{{ prod['content'] }}</td>
+            <td class="item-title">{{ prod['title'] }}</td>
+            <td class="item-content">{{ prod['content'] }}</td>
             {% endif %}
         </tr>
         {% endfor %}
@@ -249,6 +249,150 @@
         <button type="button" class="btn" data-dismiss="modal" id="idBtnCancelDeleteItem">Cancel</button>
         <button type="button" class="btn btn-primary" data-dismiss="modal" id="idBtnConfirmDeleteItem">Confirm</button>
     </div>
+</div>
+<div class="modal hide" id="idDlgEditItem">
+    <form class="form-horizontal modal-form">
+        <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h3>Edit item</h3>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="idEditedItemKeyUrlsafe" name="urlsafe" value="">
+            {% if campaign.type == 'coupon' %}
+            <div class="control-group">
+                <label class="control-label">Brand</label>
+                <div class="controls">
+                    <input id="idCouponBrand" name="brand" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">CName</label>
+                <div class="controls">
+                    <input id="idCouponCName" name="cname" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">EName</label>
+                <div class="controls">
+                    <input id="idCouponEName" name="ename" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Spec</label>
+                <div class="controls">
+                    <input id="idCouponSpec" name="spec" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Code</label>
+                <div class="controls">
+                    <input id="idCouponCode" name="code" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Discount</label>
+                <div class="controls">
+                    <input id="idCouponDiscount" name="discount" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Price</label>
+                <div class="controls">
+                    <input id="idCouponPrice" name="price" type="text">
+                </div>
+            </div>
+            {% elif campaign.type == 'preview' %}
+            <div class="control-group">
+                <label class="control-label">Brand</label>
+                <div class="controls">
+                    <input id="idPreviewBrand" name="brand" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">CName</label>
+                <div class="controls">
+                    <input id="idPreviewCName" name="cname" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">EName</label>
+                <div class="controls">
+                    <input id="idPreviewEName" name="ename" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Spec</label>
+                <div class="controls">
+                    <input id="idPreviewSpec" name="spec" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Code</label>
+                <div class="controls">
+                    <input id="idPreviewCode" name="code" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Price</label>
+                <div class="controls">
+                    <input id="idPreviewPrice" name="price" type="text">
+                </div>
+            </div>
+            {% elif campaign.type == 'exhibition' %}
+            <div class="control-group">
+                <label class="control-label">Title</label>
+                <div class="controls">
+                    <input id="idExhibitionTitle" name="title" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Start</label>
+                <div class="controls">
+                    <input id="idExhibitionStart" name="start" type="date">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">End</label>
+                <div class="controls">
+                    <input id="idExhibitionEnd" name="end" type="date">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Locations</label>
+                <div class="controls">
+                    <select id="idExhibitionLocations" name="locations" multiple="multiple" size="9">
+                        <option value="Shihchih">汐止店</option>
+                        <option value="Neihu">內湖店</option>
+                        <option value="Chungho">中和店</option>
+                        <option value="Taoyuan">桃園店</option>
+                        <option value="Hsinchu">新竹店</option>
+                        <option value="Taichung">台中店</option>
+                        <option value="Tainan">台南店</option>
+                        <option value="Dashun">大順店</option>
+                        <option value="Kaohsiung">高雄店</option>
+                    </select>
+                </div>
+            </div>
+            {% elif campaign.type == 'announcement' %}
+            <div class="control-group">
+                <label class="control-label">Title</label>
+                <div class="controls">
+                    <input id="idAnnouncementTitle" name="title" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Content</label>
+                <div class="controls">
+                    <textarea id="idAnnouncementContent" class="input-block-level" rows="5" name="content"></textarea>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn" data-dismiss="modal" id="idBtnCancelEditItem">Cancel</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" id="idBtnConfirmEditItem">Edit</button>
+        </div>
+    </form>
 </div>
 {% endif %}
 {% endblock content %}
@@ -340,6 +484,84 @@ $('#idBtnConfirmDeleteItem').on('click', function(){
         window.location.replace("/costco/campaign/{{ campaign.key.id() }}");
     }).fail(function(){
         log("Delete failed.");
+    }).always(function(){
+    });
+})
+$('.clsBtnAskEditItem').on('click', function(){
+    log("Prepare to edit item.");
+
+    $('#idEditedItemKeyUrlsafe').val($(this).data('urlsafe'));
+    {% if campaign.type == 'coupon' %}
+        $('#idCouponBrand').val($(this).closest('tr').children('td.item-brand').text());
+        $('#idCouponCName').val($(this).closest('tr').children('td.item-cname').text());
+        $('#idCouponEName').val($(this).closest('tr').children('td.item-ename').text());
+        $('#idCouponSpec').val($(this).closest('tr').children('td.item-spec').text());
+        $('#idCouponCode').val($(this).closest('tr').children('td.item-code').text());
+        $('#idCouponDiscount').val($(this).closest('tr').children('td.item-discount').text());
+        $('#idCouponPrice').val($(this).closest('tr').children('td.item-price').text());
+    {% elif campaign.type == 'preview' %}
+        $('#idPreviewBrand').val($(this).closest('tr').children('td.item-brand').text());
+        $('#idPreviewCName').val($(this).closest('tr').children('td.item-cname').text());
+        $('#idPreviewEName').val($(this).closest('tr').children('td.item-ename').text());
+        $('#idPreviewSpec').val($(this).closest('tr').children('td.item-spec').text());
+        $('#idPreviewCode').val($(this).closest('tr').children('td.item-code').text());
+        $('#idPreviewPrice').val($(this).closest('tr').children('td.item-price').text());
+    {% elif campaign.type == 'exhibition' %}
+        $('#idExhibitionTitle').val($(this).closest('tr').children('td.item-title').text());
+        $('#idExhibitionStart').val($(this).closest('tr').children('td.item-start').text());
+        $('#idExhibitionEnd').val($(this).closest('tr').children('td.item-end').text());
+        var locations = $(this).closest('tr').children('td.item-locations').text();
+        var arrayLocations = locations.split(' ');
+        $('#idExhibitionLocations').val(arrayLocations);
+    {% elif campaign.type == 'announcement' %}
+        $('#idAnnouncementTitle').val($(this).closest('tr').children('td.item-title').text());
+        $('#idAnnouncementContent').val($(this).closest('tr').children('td.item-content').text());
+    {% endif %}
+})
+$('#idBtnCancelEditItem').on('click', function(){
+    log("Cancel to edit item.");
+})
+$('#idBtnConfirmEditItem').on('click', function(){
+    log("Ready to edit item.");
+
+    {% if campaign.type == 'exhibition' %}
+        log($('#idExhibitionLocations').val());
+    {% endif %}
+
+    $.ajax({
+        url: "/costco/campaign/{{ campaign.key.id() }}",
+        type: "PUT",
+        data: {
+            urlsafe: $('#idEditedItemKeyUrlsafe').val(),
+        {% if campaign.type == 'coupon' %}
+            brand: $('#idCouponBrand').val(),
+            cname: $('#idCouponCName').val(),
+            ename: $('#idCouponEName').val(),
+            spec: $('#idCouponSpec').val(),
+            code: $('#idCouponCode').val(),
+            discount: $('#idCouponDiscount').val(),
+            price: $('#idCouponPrice').val()
+        {% elif campaign.type == 'preview' %}
+            brand: $('#idPreviewBrand').val(),
+            cname: $('#idPreviewCName').val(),
+            ename: $('#idPreviewEName').val(),
+            spec: $('#idPreviewSpec').val(),
+            code: $('#idPreviewCode').val(),
+            price: $('#idPreviewPrice').val()
+        {% elif campaign.type == 'exhibition' %}
+            title: $('#idExhibitionTitle').val(),
+            start: $('#idExhibitionStart').val(),
+            end: $('#idExhibitionEnd').val(),
+            locations: $('#idExhibitionLocations').val()
+        {% elif campaign.type == 'announcement' %}
+            title: $('#idAnnouncementTitle').val(),
+            content: $('#idAnnouncementContent').val()
+        {% endif %}
+        }
+    }).done(function(){
+        log('Edit item done.');
+    }).fail(function(){
+        log('Edit item failed.');
     }).always(function(){
     });
 })
