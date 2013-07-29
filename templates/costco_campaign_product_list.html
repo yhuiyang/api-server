@@ -165,7 +165,7 @@
 </div>
 
 <h1>{{ campaign.type | capitalize }} <small id="idTextVersion">{{ campaign.key.id()|int + campaign.patch }}</small>
-    <span class="label label-important" id="idLabelImportantNotification">{% if campaign.published and campaign.modified %}Need re-publish{% endif %}</span>
+    <span class="label label-important" id="idLabelImportantNotification">{% if campaign.published and campaign.modified and products %}Need re-publish{% endif %}</span>
     <button type="button" id="showHideBtn" class="btn btn-info pull-right" data-toggle="collapse" data-target="#myCreateForm">
         <i id="btnIcon" class="icon-chevron-down icon-white"></i><span id="btnText">Show form</span>
     </button>
