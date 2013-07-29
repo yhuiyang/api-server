@@ -354,7 +354,8 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
             item_data[prop] = new
             logging.debug('Property %s: old [%s], new [%s]' % (prop, old, new))
 
-        itemEntity.put()
+        campaignEntity.modified = True
+        ndb.put_multi([campaignEntity, itemEntity])
 
     def delete(self, camp_id):
 
