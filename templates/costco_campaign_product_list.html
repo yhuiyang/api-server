@@ -200,7 +200,7 @@
     </thead>
     <tbody>
         {% for prod in products %}
-        <tr onmouseover="document.getElementById('opBtnGrp{{ loop.index }}').style.display = 'block';" onmouseout="document.getElementById('opBtnGrp{{ loop.index }}').style.display = 'none';">
+        <tr id="prod_{{ loop.index }}" onmouseover="document.getElementById('opBtnGrp{{ loop.index }}').style.display = 'block';" onmouseout="document.getElementById('opBtnGrp{{ loop.index }}').style.display = 'none';">
             <td style="text-align:center; width:28px;">{{ loop.index }}
                 <div class="btn-group btn-group-vertical" id="opBtnGrp{{ loop.index }}" style="display: none;">
                     <button type="button" class="btn btn-mini clsBtnAskEditItem" data-toggle="modal" data-target="#idDlgEditItem" data-urlsafe="{{ prod.urlsafe }}" title="Edit"><i class="icon-edit"></i></button>
@@ -257,6 +257,7 @@
             <h3>Edit item</h3>
         </div>
         <div class="modal-body">
+            <input type="hidden" id="idItemTableRowId" value="">
             <input type="hidden" id="idEditedItemKeyUrlsafe" name="urlsafe" value="">
             {% if campaign.type == 'coupon' %}
             <div class="control-group">
@@ -490,6 +491,7 @@ $('#idBtnConfirmDeleteItem').on('click', function(){
 $('.clsBtnAskEditItem').on('click', function(){
     log("Prepare to edit item.");
 
+    $('#idItemTableRowId').val($(this).closest('tr').attr('id')); /* backup the table row id which contains this edit button */
     $('#idEditedItemKeyUrlsafe').val($(this).data('urlsafe'));
     {% if campaign.type == 'coupon' %}
         $('#idCouponBrand').val($(this).closest('tr').children('td.item-brand').text());
@@ -524,10 +526,6 @@ $('#idBtnCancelEditItem').on('click', function(){
 $('#idBtnConfirmEditItem').on('click', function(){
     log("Ready to edit item.");
 
-    {% if campaign.type == 'exhibition' %}
-        log($('#idExhibitionLocations').val());
-    {% endif %}
-
     $.ajax({
         url: "/costco/campaign/{{ campaign.key.id() }}",
         type: "PUT",
@@ -560,6 +558,40 @@ $('#idBtnConfirmEditItem').on('click', function(){
         }
     }).done(function(){
         log('Edit item done.');
+        /* show re-publish if already published */
+        {% if campaign.published %}
+        $('#idLabelImportantNotification').text('Need re-publish')
+        /* enable publish button */
+        $('#idNavbarBtnCampaignPublish').removeClass('disabled');
+        $('#idNavbarBtnCampaignPublish').attr('disabled', null);
+        {% endif %}
+        /* load modal values to table cells */
+        var trid = $('#idItemTableRowId').val();
+        {% if campaign.type == 'coupon' %}
+        $('#'+trid).children('td.item-brand').text($('#idCouponBrand').val());
+        $('#'+trid).children('td.item-cname').text($('#idCouponCName').val());
+        $('#'+trid).children('td.item-ename').text($('#idCouponEName').val());
+        $('#'+trid).children('td.item-spec').text($('#idCouponSpec').val());
+        $('#'+trid).children('td.item-code').text($('#idCouponCode').val());
+        $('#'+trid).children('td.item-discount').text($('#idCouponDiscount').val());
+        $('#'+trid).children('td.item-price').text($('#idCouponPrice').val());
+        {% elif campaign.type == 'preview' %}
+        $('#'+trid).children('td.item-brand').text($('#idPreviewBrand').val());
+        $('#'+trid).children('td.item-cname').text($('#idPreviewCName').val());
+        $('#'+trid).children('td.item-ename').text($('#idPreviewEName').val());
+        $('#'+trid).children('td.item-spec').text($('#idPreviewSpec').val());
+        $('#'+trid).children('td.item-code').text($('#idPreviewCode').val());
+        $('#'+trid).children('td.item-price').text($('#idPreviewPrice').val());
+        {% elif campaign.type == 'exhibition' %}
+        $('#'+trid).children('td.item-title').text($('#idExhibitionTitle').val());
+        $('#'+trid).children('td.item-start').text($('#idExhibitionStart').val());
+        $('#'+trid).children('td.item-end').text($('#idExhibitionEnd').val());
+        var loc_array = $('#idExhibitionLocations').val();
+        $('#'+trid).children('td.item-locations').html(loc_array.join(' <br>')); /* use html instead of text, so <br> represent correctly. */
+        {% elif campaign.type == 'announcement' %}
+        $('#'+trid).children('td.item-title').text($('#idAnnouncementTitle').val());
+        $('#'+trid).children('td.item-content').text($('#idAnnouncementContent').val());
+        {% endif %}
     }).fail(function(){
         log('Edit item failed.');
     }).always(function(){
