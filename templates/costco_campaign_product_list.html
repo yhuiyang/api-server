@@ -401,34 +401,34 @@
 {% block mediaJS %}
 <script type="text/javascript">
 $('#myCreateForm').on('shown', function() {
-    log('Product item create form is shown.');
+    console.log('Product item create form is shown.');
     $('#btnText').text('Hide form');
     $('#btnIcon').removeClass('icon-chevron-down').addClass('icon-chevron-up');
 })
 $('#myCreateForm').on('hidden', function() {
-    log('Product item create form is hidden.');
+    console.log('Product item create form is hidden.');
     $('#btnText').text('Show form');
     $('#btnIcon').removeClass('icon-chevron-up').addClass('icon-chevron-down');
 })
 $('#idNavbarBtnCampaignPublish').on('click', function(){
-    log('Prepare to publish campaign.');
+    console.log('Prepare to publish campaign.');
     $('#idTextConfirmPublishStateChanging').text('Are you sure you want to publish this campaign?');
 })
 $('#idNavbarBtnCampaignUnpublish').on('click', function(){
-    log('Prepare to unpublish campaign.')
+    console.log('Prepare to unpublish campaign.')
     $('#idTextConfirmPublishStateChanging').text('Are you sure you want to unpublish this campaign?');
 })
 $('#idBtnCancelPublishStateChangine').on('click', function(){
-    log('Cancel campaign publish state change!');
+    console.log('Cancel campaign publish state change!');
 })
 $('#idBtnConfirmPublishStateChanging').on('click', function(){
     var publish;
     var str_confirm = $('#idTextConfirmPublishStateChanging').text();
     if (~str_confirm.indexOf("unpublish")) {
-        log('Ready to unpublish campaign.');
+        console.log('Ready to unpublish campaign.');
         publish = false;
     } else if (~str_confirm.indexOf("publish")) {
-        log('Ready to publish campaign.');
+        console.log('Ready to publish campaign.');
         publish = true;
     } else {
         return;
@@ -440,7 +440,7 @@ $('#idBtnConfirmPublishStateChanging').on('click', function(){
         data: {publish: publish}
     }).done(function(){
         if (publish) {
-            log('Campaign publish completed!');
+            console.log('Campaign publish completed!');
             $('#idNavbarBtnCampaignPublish').addClass('disabled');
             $('#idNavbarBtnCampaignUnpublish').removeClass('disabled');
             document.getElementById('idNavbarBtnCampaignPublish').setAttribute('disabled', 'disabled');
@@ -451,7 +451,7 @@ $('#idBtnConfirmPublishStateChanging').on('click', function(){
             /* empty notification label */
             $('#idLabelImportantNotification').text('')
         } else {
-            log('Campaign unpublish completed!');
+            console.log('Campaign unpublish completed!');
             $('#idNavbarBtnCampaignUnpublish').addClass('disabled');
             $('#idNavbarBtnCampaignPublish').removeClass('disabled');
             document.getElementById('idNavbarBtnCampaignUnpublish').setAttribute('disabled', 'disabled');
@@ -464,16 +464,16 @@ $('#idBtnConfirmPublishStateChanging').on('click', function(){
 })
 $('.clsBtnAskDeleteItem').on('click', function(){
     var cname_or_title = $(this).data('cname-or-title');
-    log("Prepare to delete item: " + cname_or_title);
+    console.log("Prepare to delete item: " + cname_or_title);
     $('#idTextConfirmDeleteItem').text("Are you sure you want to delete " + cname_or_title + "?");
     $('#idItemKey').text($(this).data('urlsafe'));
     $('#idBlobKey').text($(this).data('blobkey'));
 })
 $('#idBtnCancelDeleteItem').on('click', function(){
-    log('Cancel to delete item.');
+    console.log('Cancel to delete item.');
 })
 $('#idBtnConfirmDeleteItem').on('click', function(){
-    log('Confirm to delete item.');
+    console.log('Confirm to delete item.');
     var rowid = $('#idTblRowId').text();
     var urlsafe = $('#idItemKey').text();
     var blobkey = $('#idBlobKey').text();
@@ -481,15 +481,15 @@ $('#idBtnConfirmDeleteItem').on('click', function(){
         type: "DELETE",
         url: "/costco/campaign/{{ campaign.key.id() }}?item_key=" + urlsafe + "&blob_key=" + blobkey,
     }).done(function(){
-        log("Delete done.");
+        console.log("Delete done.");
         window.location.replace("/costco/campaign/{{ campaign.key.id() }}");
     }).fail(function(){
-        log("Delete failed.");
+        console.log("Delete failed.");
     }).always(function(){
     });
 })
 $('.clsBtnAskEditItem').on('click', function(){
-    log("Prepare to edit item.");
+    console.log("Prepare to edit item.");
 
     $('#idItemTableRowId').val($(this).closest('tr').attr('id')); /* backup the table row id which contains this edit button */
     $('#idEditedItemKeyUrlsafe').val($(this).data('urlsafe'));
@@ -521,10 +521,10 @@ $('.clsBtnAskEditItem').on('click', function(){
     {% endif %}
 })
 $('#idBtnCancelEditItem').on('click', function(){
-    log("Cancel to edit item.");
+    console.log("Cancel to edit item.");
 })
 $('#idBtnConfirmEditItem').on('click', function(){
-    log("Ready to edit item.");
+    console.log("Ready to edit item.");
 
     $.ajax({
         url: "/costco/campaign/{{ campaign.key.id() }}",
@@ -557,7 +557,7 @@ $('#idBtnConfirmEditItem').on('click', function(){
         {% endif %}
         }
     }).done(function(){
-        log('Edit item done.');
+        console.log('Edit item done.');
         /* show re-publish if already published */
         {% if campaign.published %}
         $('#idLabelImportantNotification').text('Need re-publish')
@@ -593,7 +593,7 @@ $('#idBtnConfirmEditItem').on('click', function(){
         $('#'+trid).children('td.item-content').text($('#idAnnouncementContent').val());
         {% endif %}
     }).fail(function(){
-        log('Edit item failed.');
+        console.log('Edit item failed.');
     }).always(function(){
     });
 })
