@@ -384,26 +384,20 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
                 # self.redirect_to('costco-campaign-item-crud', camp_id=camp_id, _code=303)  # move redirect to client
 
 
-class ApiCostcoWhatsNew(BaseHandler):
+class ApiV1CostcoCampaigns(BaseHandler):
 
     def get(self):
 
-        client_camp_str = self.request.get('camp_id')
-        if client_camp_str == '':
-            client_camp_int = 0
-        else:
-            client_camp_int = int(client_camp_str)
-
         # CampaignManager holds published campaign version number list
         campMgrEntity = models.CampaignManager.get_or_insert(models.COSTCO_CAMPAIGN_MANAGER)
-        resp = [ver for ver in campMgrEntity.listPublishedVersions if ver > client_camp_int]
+        resp = campMgrEntity.listPublishedVersions
         resp.sort(reverse=True)
 
         self.response.content_type = 'application/json'
         self.response.body = json.dumps(resp)
 
 
-class ApiCostcoCampaignDetail(BaseHandler):
+class ApiV1CostcoCampaignDetail(BaseHandler):
 
     def get(self, camp_id):
 

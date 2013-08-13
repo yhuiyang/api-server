@@ -35,8 +35,8 @@ _routes = [
                   name='costco-campaign-item-crud', strict_slash=True),
     RedirectRoute(r'/costco/campaigns', handler=handlers.CostcoCampaignCRUD,
                   name='costco-campaign-crud', strict_slash=True),
-    webapp2.Route(r'/api/costco-whatsnew', handler=handlers.ApiCostcoWhatsNew),
-    webapp2.Route(r'/api/costco-campaign/<camp_id:[1-9]\d*>', handlers.ApiCostcoCampaignDetail),
+    webapp2.Route(r'/api/v1/costco/campaigns', handler=handlers.ApiV1CostcoCampaigns),
+    webapp2.Route(r'/api/v1/costco/campaign/<camp_id:[1-9]\d*>', handlers.ApiV1CostcoCampaignDetail),
 ]
 
 app = webapp2.WSGIApplication(routes=_routes, config=_config, debug=_debug)
