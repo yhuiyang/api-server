@@ -24,19 +24,19 @@ from google.appengine.ext import ndb
 # local imports
 
 
-COSTCO_CAMPAIGN_MANAGER = 'CostcoCampaignManager'
+COSTCO_EVENT_MANAGER = 'CostcoEventManager'
 
 
-class CampaignManager(ndb.Model):  # one entity
+class EventManager(ndb.Model):  # one entity
     listPublishedVersions = ndb.IntegerProperty(repeated=True, indexed=False)
     lastCreatedVersion = ndb.IntegerProperty(default=0, indexed=False)
 
 
-class PublishedCampaign(ndb.Model):
-    campaign_data = ndb.JsonProperty(required=True, indexed=False)
+class PublishedEvent(ndb.Model):
+    event_data = ndb.JsonProperty(required=True, indexed=False)
 
 
-class Campaign(ndb.Model):  # one major version, one entity, id=major version
+class Event(ndb.Model):  # one major version, one entity, id=major version
     start = ndb.DateProperty(required=True)
     end = ndb.DateProperty(required=True)
     patch = ndb.IntegerProperty(default=0, indexed=False)
@@ -50,29 +50,29 @@ class Item(ndb.Model):
     data = ndb.JsonProperty(required=True)
 
     @classmethod
-    def get_campaign_items(cls, camp_version):
-        if isinstance(camp_version, str):
-            intCampVersion = int(camp_version)
-            intCampMajorVer = (intCampVersion / 100) * 100
-        elif isinstance(camp_version, int):
-            intCampMajorVer = (camp_version / 100) * 100
+    def get_event_items(cls, event_version):
+        if isinstance(event_version, str):
+            intEventVersion = int(event_version)
+            intEventMajorVer = (intEventVersion / 100) * 100
+        elif isinstance(event_version, int):
+            intEventMajorVer = (event_version / 100) * 100
         else:
             return None
 
-        return Item.query(ancestor=ndb.Key(Campaign, str(intCampMajorVer)))
+        return Item.query(ancestor=ndb.Key(Event, str(intEventMajorVer)))
 
     @classmethod
-    def get_user_fields(cls, campaign_type='coupon'):
+    def get_user_fields(cls, event_type='coupon'):
         """
         Fields provided by user input
         """
-        if campaign_type == 'coupon':
+        if event_type == 'coupon':
             fields = ['brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
-        elif campaign_type == 'exhibition':
+        elif event_type == 'exhibition':
             fields = ['title', 'start', 'end', 'locations']
-        elif campaign_type == 'preview':
+        elif event_type == 'preview':
             fields = ['brand', 'cname', 'ename', 'spec', 'code', 'price']
-        elif campaign_type == 'announcement':
+        elif event_type == 'announcement':
             fields = ['title', 'content']
         else:
             fields = []
@@ -87,34 +87,34 @@ class Item(ndb.Model):
         return fields
 
     @classmethod
-    def get_web_fields(cls, campaign_type='coupon'):
+    def get_web_fields(cls, event_type='coupon'):
         """
         Fields used on web management page
         """
-        if campaign_type == 'coupon':
+        if event_type == 'coupon':
             fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
-        elif campaign_type == 'exhibition':
+        elif event_type == 'exhibition':
             fields = ['url', 'blob_key', 'urlsafe', 'title', 'start', 'end', 'locations']
-        elif campaign_type == 'preview':
+        elif event_type == 'preview':
             fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'price']
-        elif campaign_type == 'announcement':
+        elif event_type == 'announcement':
             fields = ['url', 'blob_key', 'urlsafe', 'title', 'content']
         else:
             fields = []
         return fields
 
     @classmethod
-    def get_published_fields(cls, campaign_type='coupon'):
+    def get_published_fields(cls, event_type='coupon'):
         """
         Fields used by the app client
         """
-        if campaign_type == 'coupon':
+        if event_type == 'coupon':
             fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
-        elif campaign_type == 'exhibition':
+        elif event_type == 'exhibition':
             fields = ['url', 'filename', 'title', 'start', 'end', 'locations']
-        elif campaign_type == 'preview':
+        elif event_type == 'preview':
             fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'price']
-        elif campaign_type == 'announcement':
+        elif event_type == 'announcement':
             fields = ['url', 'filename', 'title', 'content']
         else:
             fields = []

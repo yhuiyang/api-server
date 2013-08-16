@@ -71,55 +71,55 @@ class Dashboard(BaseHandler):
         self.render_response("dashboard.html", **params)
 
 
-class CostcoCampaignCRUD(BaseHandler):
+class CostcoEventCRUD(BaseHandler):
 
-    def getAllCampaignMajorVersionList(self):
+    def getAllEventMajorVersionList(self):
         """
-        Retrieve a unsorted list which contains campaign major version integer number.
+        Retrieve a unsorted list which contains event major version integer number.
         Query data store only if querying mem cache is missed.
 
         Return: python list. Ex: [1400, 800, 900]
         """
-        allCampaignMajorVersionList = getCachedCostcoAllCampaignMajorVersions('list')
-        if allCampaignMajorVersionList is None:
-            allCampInDatastore = models.Campaign.query()
-            campMajorVerList = []
-            for ver in allCampInDatastore:
-                campMajorVerList.append(int(ver.key.id()))
+        allEventMajorVersionList = getCachedCostcoAllEventMajorVersions('list')
+        if allEventMajorVersionList is None:
+            allEventInDatastore = models.Event.query()
+            eventMajorVerList = []
+            for ver in allEventInDatastore:
+                eventMajorVerList.append(int(ver.key.id()))
 
-            setCachedCostcoAllCampaignMajorVersions(campMajorVerList)
+            setCachedCostcoAllEventMajorVersions(eventMajorVerList)
         else:
-            campMajorVerList = allCampaignMajorVersionList
+            eventMajorVerList = allEventMajorVersionList
 
-        return campMajorVerList
+        return eventMajorVerList
 
     @admin_required
     def get(self):
 
-        campMajorVerList = self.getAllCampaignMajorVersionList()
-        campMajorVerList.sort(reverse=True)
+        eventMajorVerList = self.getAllEventMajorVersionList()
+        eventMajorVerList.sort(reverse=True)
 
         # prepare for rendering data
-        campaigns = []
-        for majorVerInt in campMajorVerList:
-            campaign = {}
-            campEntity = models.Campaign.get_by_id(str(majorVerInt))
-            campaign['start'] = campEntity.start
-            campaign['end'] = campEntity.end
-            campaign['published'] = campEntity.published
-            campaign['modified'] = campEntity.modified
-            campaign['ver'] = majorVerInt + campEntity.patch
-            campaign['type'] = campEntity.type
-            campaign['majorVer'] = majorVerInt
-            campaigns.append(campaign)
+        events = []
+        for majorVerInt in eventMajorVerList:
+            event = {}
+            eventEntity = models.Event.get_by_id(str(majorVerInt))
+            event['start'] = eventEntity.start
+            event['end'] = eventEntity.end
+            event['published'] = eventEntity.published
+            event['modified'] = eventEntity.modified
+            event['ver'] = majorVerInt + eventEntity.patch
+            event['type'] = eventEntity.type
+            event['majorVer'] = majorVerInt
+            events.append(event)
 
-        #logging.debug(campaigns)
+        #logging.debug(events)
 
         params = {
             'app_name': 'Costco',
-            'campaigns': campaigns
+            'events': events
         }
-        self.render_response('costco_campaign_list.html', **params)
+        self.render_response('costco_event_list.html', **params)
 
     def post(self):
 
@@ -135,62 +135,63 @@ class CostcoCampaignCRUD(BaseHandler):
         sY, sM, sD = start_date.split('-')
         eY, eM, eD = end_date.split('-')
 
-        mgrKey = ndb.Key(models.CampaignManager, models.COSTCO_CAMPAIGN_MANAGER)
+        mgrKey = ndb.Key(models.EventManager, models.COSTCO_EVENT_MANAGER)
         mgrEntity = mgrKey.get()
         if mgrEntity is None:
             logging.debug('''Manager entity doesn't exist yet''')
-            mgrEntity = models.CampaignManager(id=models.COSTCO_CAMPAIGN_MANAGER)
+            mgrEntity = models.EventManager(id=models.COSTCO_EVENT_MANAGER)
             newVer = 100
         else:
             newVer = mgrEntity.lastCreatedVersion + 100
 
         mgrEntity.lastCreatedVersion = newVer
-        campaign = models.Campaign(id=str(newVer))
-        campaign.start = date(int(sY), int(sM), int(sD))
-        campaign.end = date(int(eY), int(eM), int(eD))
-        campaign.type = type
+        event = models.Event(id=str(newVer))
+        event.start = date(int(sY), int(sM), int(sD))
+        event.end = date(int(eY), int(eM), int(eD))
+        event.type = type
 
-        ndb.put_multi([campaign, mgrEntity])
+        ndb.put_multi([event, mgrEntity])
 
         # update memcache
-        appendCachedCostcoAllCampaignMajorVersions(newVer)
+        appendCachedCostcoAllEventMajorVersions(newVer)
 
-        self.redirect_to('costco-campaign-crud')
+        self.redirect_to('costco-event-crud')
 
 
-class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
+class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
 
     @admin_required
-    def get(self, camp_id):
+    def get(self, event_id):
 
-        # find all items belongs to this campaign
-        allItems = models.Item.get_campaign_items(camp_id)
+        # find all items belongs to this event
+        allItems = models.Item.get_event_items(event_id)
 
-        # populate product_list for later rendering
-        campaignKey = ndb.Key(models.Campaign, str((int(camp_id) / 100) * 100))
-        campaignEntity = campaignKey.get()
-        product_list = []
+        # populate item_list for later rendering
+        eventKey = ndb.Key(models.Event, str((int(event_id) / 100) * 100))
+        eventEntity = eventKey.get()
+        item_list = []
         for item in allItems:
-            product = {}
-            for n in models.Item.get_web_fields(campaignEntity.type):
+            item_prop = {}
+            for n in models.Item.get_web_fields(eventEntity.type):
                 if n == 'urlsafe':
-                    product[n] = item.key.urlsafe()
+                    item_prop[n] = item.key.urlsafe()
                 else:
-                    product[n] = item.data.get(n)
-            product_list.append(product)
+                    item_prop[n] = item.data.get(n)
+            item_list.append(item_prop)
+        logging.debug(item_list)
 
         # the url to post to blobstore is dynamically generated, when blobstore saving completed, GAE will invoke
         # our callback which was setup in blobstore.create_upload_url(THIS_IS_APP_POST_CALLBACK_URL)
-        myPostHandlerUrl = self.uri_for('costco-campaign-item-crud', camp_id=camp_id)
+        myPostHandlerUrl = self.uri_for('costco-event-item-crud', event_id=event_id)
         params = {
             'app_name': 'Costco',
-            'campaign': campaignEntity,
+            'event': eventEntity,
             'post_url': blobstore.create_upload_url(myPostHandlerUrl),
-            'products': product_list,
+            'Items': item_list,
         }
-        self.render_response('costco_campaign_product_list.html', **params)
+        self.render_response('costco_event_item_list.html', **params)
 
-    def post(self, camp_id):
+    def post(self, event_id):
 
         if not users.is_current_user_admin():
             self.abort(403)
@@ -219,120 +220,120 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
                 data_dict[prop] = str(blob_key)
 
         # collect item info
-        int_camp_id = int(camp_id)
-        camp_key = str((int_camp_id / 100) * 100)
-        campaignEntity = models.Campaign.get_by_id(camp_key)
-        for prop in models.Item.get_user_fields(campaignEntity.type):
+        int_event_id = int(event_id)
+        event_key = str((int_event_id / 100) * 100)
+        eventEntity = models.Event.get_by_id(event_key)
+        for prop in models.Item.get_user_fields(eventEntity.type):
             if prop == 'locations':
                 data_dict[prop] = self.request.get_all(prop)
             else:
                 data_dict[prop] = self.request.get(prop)
 
-        # mark campaign dirty
-        campaignEntity.modified = True
+        # mark event dirty
+        eventEntity.modified = True
 
         # create new item in datastore
-        item = models.Item(parent=campaignEntity.key)
+        item = models.Item(parent=eventEntity.key)
         item.data = data_dict
 
         # update datastore
-        ndb.put_multi([item, campaignEntity])
+        ndb.put_multi([item, eventEntity])
 
-        self.redirect_to('costco-campaign-item-crud', camp_id=camp_id, _code=303)
+        self.redirect_to('costco-event-item-crud', event_id=event_id, _code=303)
 
-    def put(self, camp_id):
+    def put(self, event_id):
 
         if not users.is_current_user_admin():
             self.abort(403)
 
-        intCampMajorVer = (int(camp_id) / 100) * 100
-        strCampMajorVer = str(intCampMajorVer)
-        campaignKey = ndb.Key(models.Campaign, strCampMajorVer)
+        intEventMajorVer = (int(event_id) / 100) * 100
+        strEventMajorVer = str(intEventMajorVer)
+        eventKey = ndb.Key(models.Event, strEventMajorVer)
 
-        campaignEntity = campaignKey.get()
-        if campaignEntity is None:
-            logging.error('Invalid campaign id.')
+        eventEntity = eventKey.get()
+        if eventEntity is None:
+            logging.error('Invalid event id.')
             self.abort(404)
 
-        # edit campaign publish state
+        # edit event publish state
         request_publish = self.request.get('publish')
         if request_publish is not None and request_publish in ['true', 'false']:
-            intCampVer = intCampMajorVer + campaignEntity.patch
+            intEventVer = intEventMajorVer + eventEntity.patch
 
             if request_publish == 'true':  # do publish
 
                 patchAdvance = True
 
                 # check if modification happened
-                if campaignEntity.modified is False:
-                    logging.warning('Request publish a non-modification campaign, patch will not be advanced!')
+                if eventEntity.modified is False:
+                    logging.warning('Request publish a non-modification event, patch will not be advanced!')
                     patchAdvance = False
 
-                # retrieve campaign manager
-                campMgrEntity = models.CampaignManager.get_or_insert(models.COSTCO_CAMPAIGN_MANAGER)
+                # retrieve event manager
+                eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
 
                 # check if still in published state
-                if campaignEntity.published is True:
+                if eventEntity.published is True:
                     try:
-                        campMgrEntity.listPublishedVersions.remove(intCampVer)
+                        eventMgrEntity.listPublishedVersions.remove(intEventVer)
                     except ValueError:
-                        logging.error('Remove non-exist version(%d) from published version list.' % intCampVer)
+                        logging.error('Remove non-exist version(%d) from published version list.' % intEventVer)
 
-                # update campaign fields
+                # update event fields
                 if patchAdvance:
-                    campaignEntity.patch += 1
-                campaignEntity.modified = False
-                campaignEntity.published = True
+                    eventEntity.patch += 1
+                eventEntity.modified = False
+                eventEntity.published = True
 
-                # new campaign version number
-                intCampVer = intCampMajorVer + campaignEntity.patch
+                # new event version number
+                intEventVer = intEventMajorVer + eventEntity.patch
 
-                # populate this campaign data and create new one published campaign entity for it
-                camp_data = dict()
-                camp_data['start'] = campaignEntity.start.isoformat()
-                camp_data['end'] = campaignEntity.end.isoformat()
-                camp_data['type'] = campaignEntity.type
-                camp_data['items'] = []
-                allCampItems = models.Item.get_campaign_items(camp_id)
-                for item in allCampItems:
+                # populate this event data and create new one published event entity for it
+                event_data = dict()
+                event_data['start'] = eventEntity.start.isoformat()
+                event_data['end'] = eventEntity.end.isoformat()
+                event_data['type'] = eventEntity.type
+                event_data['items'] = []
+                allEventItems = models.Item.get_event_items(event_id)
+                for item in allEventItems:
                     item_published_data = dict()
-                    for prop in models.Item.get_published_fields(campaignEntity.type):
+                    for prop in models.Item.get_published_fields(eventEntity.type):
                         item_published_data[prop] = item.data[prop]
-                    camp_data['items'].append(item_published_data)
+                    event_data['items'].append(item_published_data)
 
-                publishedCampEntity = models.PublishedCampaign(id=str(intCampVer))
-                publishedCampEntity.campaign_data = camp_data
+                publishedEventEntity = models.PublishedEvent(id=str(intEventVer))
+                publishedEventEntity.event_data = event_data
 
-                # append campaign version number into published campaign version list
-                campMgrEntity.listPublishedVersions.append(intCampVer)
+                # append event version number into published event version list
+                eventMgrEntity.listPublishedVersions.append(intEventVer)
 
                 # update data store
-                ndb.put_multi([campMgrEntity, campaignEntity, publishedCampEntity])
+                ndb.put_multi([eventMgrEntity, eventEntity, publishedEventEntity])
 
             elif request_publish == 'false':  # do un-publish
 
                 # check if already published
-                if campaignEntity.published is False:
-                    logging.warning('Request un-publish a not-yet-published campaign, skip action!')
+                if eventEntity.published is False:
+                    logging.warning('Request un-publish a not-yet-published event, skip action!')
                     self.abort(406)  # not acceptable
 
-                # retrieve campaign manager
-                campMgrEntity = models.CampaignManager.get_or_insert(models.COSTCO_CAMPAIGN_MANAGER)
+                # retrieve event manager
+                eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
 
                 try:
-                    campMgrEntity.listPublishedVersions.remove(intCampVer)
+                    eventMgrEntity.listPublishedVersions.remove(intEventVer)
                 except ValueError:
-                    logging.error("Campaign is marked published, but doesn't exist in published campaign list!")
+                    logging.error("Event is marked published, but doesn't exist in published event list!")
 
-                # update campaign fields
-                campaignEntity.published = False
+                # update event fields
+                eventEntity.published = False
 
                 # update data store
-                ndb.put_multi([campMgrEntity, campaignEntity])
+                ndb.put_multi([eventMgrEntity, eventEntity])
 
             return
 
-        # edit campaign item property
+        # edit event item property
         urlsafeKey = self.request.get('urlsafe')
         if len(urlsafeKey) == 0:
             logging.error("Request doesn't contain a valid item urlsafe key.")
@@ -345,7 +346,7 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
             self.abort(404)
 
         item_data = itemEntity.data
-        for prop in models.Item.get_user_fields(campaignEntity.type):
+        for prop in models.Item.get_user_fields(eventEntity.type):
             old = item_data[prop]
             if prop in ['locations']:
                 new = self.request.get_all('locations[]')
@@ -354,10 +355,10 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
             item_data[prop] = new
             logging.debug('Property %s: old [%s], new [%s]' % (prop, old, new))
 
-        campaignEntity.modified = True
-        ndb.put_multi([campaignEntity, itemEntity])
+        eventEntity.modified = True
+        ndb.put_multi([eventEntity, itemEntity])
 
-    def delete(self, camp_id):
+    def delete(self, event_id):
 
         if not users.is_current_user_admin():
             self.abort(403)
@@ -374,65 +375,65 @@ class CostcoCampaignItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHand
         strItemKey = self.request.get('item_key')
         if strItemKey:
             ndb.Key(urlsafe=strItemKey).delete()
-            intCampId = int(camp_id)
-            keyCampId = str((intCampId / 100) * 100)
-            campaignEntity = models.Campaign.get_by_id(keyCampId)
-            # mark campaign dirty
-            if campaignEntity is not None:
-                campaignEntity.modified = True
-                campaignEntity.put()
-                # self.redirect_to('costco-campaign-item-crud', camp_id=camp_id, _code=303)  # move redirect to client
+            intEventId = int(event_id)
+            keyEventId = str((intEventId / 100) * 100)
+            eventEntity = models.Event.get_by_id(keyEventId)
+            # mark event dirty
+            if eventEntity is not None:
+                eventEntity.modified = True
+                eventEntity.put()
+                # self.redirect_to('costco-event-item-crud', event_id=event_id, _code=303)  # move redirect to client
 
 
-class ApiV1CostcoCampaigns(BaseHandler):
+class ApiV1CostcoEvents(BaseHandler):
 
     def get(self):
 
-        # CampaignManager holds published campaign version number list
-        campMgrEntity = models.CampaignManager.get_or_insert(models.COSTCO_CAMPAIGN_MANAGER)
-        resp = campMgrEntity.listPublishedVersions
+        # EventManager holds published event version number list
+        eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
+        resp = eventMgrEntity.listPublishedVersions
         resp.sort(reverse=True)
 
         self.response.content_type = 'application/json'
         self.response.body = json.dumps(resp)
 
 
-class ApiV1CostcoCampaignDetail(BaseHandler):
+class ApiV1CostcoEventDetail(BaseHandler):
 
-    def get(self, camp_id):
+    def get(self, event_id):
 
         self.response.content_type = 'application/json'
 
-        strCampVer = camp_id
-        intCampVer = int(camp_id)
+        strEventVer = event_id
+        intEventVer = int(event_id)
 
-        # check if this is published campaign
-        campMgrEntity = models.CampaignManager.get_or_insert(models.COSTCO_CAMPAIGN_MANAGER)
-        if intCampVer not in campMgrEntity.listPublishedVersions:
-            resp = {'error': 'Requested campaign is not yet published!'}
+        # check if this is published event
+        eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
+        if intEventVer not in eventMgrEntity.listPublishedVersions:
+            resp = {'error': 'Requested event is not yet published!'}
             self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
             return
 
-        publishedCampEntity = models.PublishedCampaign.get_by_id(strCampVer)
-        if publishedCampEntity is None:
-            logging.error('There is version number in published version list, but not published campaign entity!')
+        publishedEventEntity = models.PublishedEvent.get_by_id(strEventVer)
+        if publishedEventEntity is None:
+            logging.error('There is version number in published version list, but not published event entity!')
             resp = {'error': 'Internal error!'}
         else:
-            resp = publishedCampEntity.campaign_data
+            resp = publishedEventEntity.event_data
         self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
 
 
-def getCachedCostcoAllCampaignMajorVersions(requestType='str'):
+def getCachedCostcoAllEventMajorVersions(requestType='str'):
     """
     Return a json string (requestType='str') or python list (requestType='list') which contains a array or list of
-    campaign major version number.
+    event major version number.
     Ex:
         Json string => '[ 600, 500, 300 ]' or
         Python list => [ 600, 500, 300 ]
     """
     assert requestType in ['str', 'list'], "Unknown request type, only accept 'str' or 'list'."
 
-    verJsonStr = memcache.get('all-costco-campaign-major-version-list', namespace='costco')
+    verJsonStr = memcache.get('all-costco-event-major-version-list', namespace='costco')
 
     if verJsonStr is None or len(verJsonStr) == 2:
         return None
@@ -443,9 +444,9 @@ def getCachedCostcoAllCampaignMajorVersions(requestType='str'):
         return json.loads(verJsonStr)
 
 
-def setCachedCostcoAllCampaignMajorVersions(verList_or_verStr):
+def setCachedCostcoAllEventMajorVersions(verList_or_verStr):
     """
-    Save a json string or python list which contains campaign major version number.
+    Save a json string or python list which contains event major version number.
     """
     verJsonStr = None
 
@@ -458,15 +459,15 @@ def setCachedCostcoAllCampaignMajorVersions(verList_or_verStr):
     assert len(verList) == 0 or isinstance(verList[0], int), 'Version is required to be integer number.'
 
     if verJsonStr is not None and len(verJsonStr) > 2:
-        memcache.set('all-costco-campaign-major-version-list', verJsonStr, time=1440, namespace='costco')
+        memcache.set('all-costco-event-major-version-list', verJsonStr, time=1440, namespace='costco')
 
 
-def appendCachedCostcoAllCampaignMajorVersions(intMajorVersion):
+def appendCachedCostcoAllEventMajorVersions(intMajorVersion):
     """
     Append one int major version into memcache.
     """
-    list = getCachedCostcoAllCampaignMajorVersions('list')
+    list = getCachedCostcoAllEventMajorVersions('list')
     if list is None:
         list = []
     list.append(intMajorVersion)
-    setCachedCostcoAllCampaignMajorVersions(list)
+    setCachedCostcoAllEventMajorVersions(list)

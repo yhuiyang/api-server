@@ -31,12 +31,12 @@ _config = {}
 _routes = [
     RedirectRoute(r'/', redirect_to='dashboard', name='home', strict_slash=True),
     RedirectRoute(r'/dashboard', handler=handlers.Dashboard, name='dashboard', strict_slash=True),
-    RedirectRoute(r'/costco/campaign/<camp_id:[1-9]\d*>', handler=handlers.CostcoCampaignItemCRUD,
-                  name='costco-campaign-item-crud', strict_slash=True),
-    RedirectRoute(r'/costco/campaigns', handler=handlers.CostcoCampaignCRUD,
-                  name='costco-campaign-crud', strict_slash=True),
-    webapp2.Route(r'/api/v1/costco/campaigns', handler=handlers.ApiV1CostcoCampaigns),
-    webapp2.Route(r'/api/v1/costco/campaign/<camp_id:[1-9]\d*>', handlers.ApiV1CostcoCampaignDetail),
+    RedirectRoute(r'/costco/event/<event_id:[1-9]\d*>', handler=handlers.CostcoEventItemCRUD,
+                  name='costco-event-item-crud', strict_slash=True),
+    RedirectRoute(r'/costco/events', handler=handlers.CostcoEventCRUD,
+                  name='costco-event-crud', strict_slash=True),
+    webapp2.Route(r'/api/v1/costco/events', handler=handlers.ApiV1CostcoEvents),
+    webapp2.Route(r'/api/v1/costco/event/<event_id:[1-9]\d*>', handlers.ApiV1CostcoEventDetail),
 ]
 
 app = webapp2.WSGIApplication(routes=_routes, config=_config, debug=_debug)

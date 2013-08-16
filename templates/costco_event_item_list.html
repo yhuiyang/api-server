@@ -20,16 +20,16 @@
 {% block navbar_list_items %}
     <li>
         <div class="btn-group">
-            <a href="/costco/campaigns" class="btn">
+            <a href="/costco/events" class="btn">
                 <i class="icon-arrow-left"></i>
-                Back to campaign list
+                Back to event list
             </a>
         </div>
         <div class="btn-group">
-            <button id="idNavbarBtnCampaignPublish" class={% if (not campaign.modified and campaign.published) or not products %}"btn disabled" disabled="disabled"{% else %}"btn"{% endif %} data-toggle="modal" data-target="#idDlgConfirmPublishStateChanging">
+            <button id="idNavbarBtnEventPublish" class={% if (not event.modified and event.published) or not Items %}"btn disabled" disabled="disabled"{% else %}"btn"{% endif %} data-toggle="modal" data-target="#idDlgConfirmPublishStateChanging">
                 <i class="icon-play"></i>Publish
             </button>
-            <button id="idNavbarBtnCampaignUnpublish" class={% if not campaign.published %}"btn disabled" disabled="disabled"{% else %}"btn"{% endif %} data-toggle="modal" data-target="#idDlgConfirmPublishStateChanging">
+            <button id="idNavbarBtnEventUnpublish" class={% if not event.published %}"btn disabled" disabled="disabled"{% else %}"btn"{% endif %} data-toggle="modal" data-target="#idDlgConfirmPublishStateChanging">
                 <i class="icon-pause"></i>Unpublish
             </button>
         </div>
@@ -40,14 +40,14 @@
 <div id="myCreateForm"  class="collapse">
     <form class="form-horizontal form-background" action="{{ post_url }}" method="post" enctype="multipart/form-data">
         <fieldset>
-            <legend>Create New Product (Type: {{ campaign.type | capitalize }})</legend>
+            <legend>Create New Item (Type: {{ event.type | capitalize }})</legend>
             <div class="control-group">
-                <label class="control-label" title="{{ campaign.type | capitalize }} image file to upload">Image file:</label>
+                <label class="control-label" title="{{ event.type | capitalize }} image file to upload">Image file:</label>
                 <div class="controls">
                     <input type="file" name="file">
                 </div>
             </div>
-            {% if campaign.type == 'coupon' or campaign.type == 'preview' %}
+            {% if event.type == 'coupon' or event.type == 'preview' %}
             <div class="control-group">
                 <label class="control-label" title="Item brand name">Brand:</label>
                 <div class="controls">
@@ -78,9 +78,9 @@
                     <input type="text" name="code">
                 </div>
             </div>
-            {% if campaign.type == 'coupon' %}
+            {% if event.type == 'coupon' %}
             <div class="control-group">
-                <label class="control-label" title="Item discount in this campaign">Discount:</label>
+                <label class="control-label" title="Item discount in this event">Discount:</label>
                 <div class="controls">
                     <input type="text" name="discount" required>
                 </div>
@@ -92,7 +92,7 @@
                     <input type="text" name="price">
                 </div>
             </div>
-            {% elif campaign.type == 'exhibition' %}
+            {% elif event.type == 'exhibition' %}
             <div class="control-group">
                 <label class="control-label" title="Exhibition title">Title:</label>
                 <div class="controls">
@@ -127,7 +127,7 @@
                     </select>
                 </div>
             </div>
-            {% elif campaign.type == 'announcement' %}
+            {% elif event.type == 'announcement' %}
             <div class="control-group">
                 <label class="control-label" title="Announcement title">Title:</label>
                 <div class="controls">
@@ -149,7 +149,7 @@
     </form>
 </div>
 
-<!-- modal dialog to confirm campaign publish state changing, trigger at navbar buttons -->
+<!-- modal dialog to confirm event publish state changing, trigger at navbar buttons -->
 <div id="idDlgConfirmPublishStateChanging" class="modal hide fade">
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -164,72 +164,72 @@
     </div>
 </div>
 
-<h1>{{ campaign.type | capitalize }} <small id="idTextVersion">{{ campaign.key.id()|int + campaign.patch }}</small>
-    <span class="label label-important" id="idLabelImportantNotification">{% if campaign.published and campaign.modified and products %}Need re-publish{% endif %}</span>
+<h1>{{ event.type | capitalize }} <small id="idTextVersion">{{ event.key.id()|int + event.patch }}</small>
+    <span class="label label-important" id="idLabelImportantNotification">{% if event.published and event.modified and Items %}Need re-publish{% endif %}</span>
     <button type="button" id="showHideBtn" class="btn btn-info pull-right" data-toggle="collapse" data-target="#myCreateForm">
         <i id="btnIcon" class="icon-chevron-down icon-white"></i><span id="btnText">Show form</span>
     </button>
 </h1>
 
-{% if products %}
+{% if Items %}
 <table class="table table-striped table-hover">
     <thead>
         <tr>
             <th style="text-align:center;">#</th>
             <th>Image</th>
-            {% if campaign.type == 'coupon' or campaign.type == 'preview' %}
+            {% if event.type == 'coupon' or event.type == 'preview' %}
             <th>Brand</th>
             <th>CName</th>
             <th>EName</th>
             <th>Spec</th>
             <th>Costco Code</th>
-            {% if campaign.type == 'coupon' %}
+            {% if event.type == 'coupon' %}
             <th>Discount</th>
             {% endif %}
             <th>Original Price</th>
-            {% elif campaign.type == 'exhibition' %}
+            {% elif event.type == 'exhibition' %}
             <th>Title</th>
             <th>Start date</th>
             <th>End date</th>
             <th>Locations</th>
-            {% elif campaign.type == 'announcement' %}
+            {% elif event.type == 'announcement' %}
             <th>Title</th>
             <th>Content</th>
             {% endif %}
         </tr>
     </thead>
     <tbody>
-        {% for prod in products %}
-        <tr id="prod_{{ loop.index }}" onmouseover="document.getElementById('opBtnGrp{{ loop.index }}').style.display = 'block';" onmouseout="document.getElementById('opBtnGrp{{ loop.index }}').style.display = 'none';">
+        {% for item in Items %}
+        <tr id="item_{{ loop.index }}" onmouseover="document.getElementById('opBtnGrp{{ loop.index }}').style.display = 'block';" onmouseout="document.getElementById('opBtnGrp{{ loop.index }}').style.display = 'none';">
             <td style="text-align:center; width:28px;">{{ loop.index }}
                 <div class="btn-group btn-group-vertical" id="opBtnGrp{{ loop.index }}" style="display: none;">
-                    <button type="button" class="btn btn-mini clsBtnAskEditItem" data-toggle="modal" data-target="#idDlgEditItem" data-urlsafe="{{ prod.urlsafe }}" title="Edit"><i class="icon-edit"></i></button>
-                    <button type="button" class="btn btn-mini clsBtnAskDeleteItem" data-toggle="modal" data-target="#idDlgConfirmDeleteItem" data-cname-or-title="{{ prod['cname'] if prod['cname'] else prod['title'] }}" data-urlsafe="{{ prod.urlsafe }}" data-blobkey="{{ prod.blob_key }}" title="Delete"><i class="icon-trash"></i></button>
+                    <button type="button" class="btn btn-mini clsBtnAskEditItem" data-toggle="modal" data-target="#idDlgEditItem" data-urlsafe="{{ item.urlsafe }}" title="Edit"><i class="icon-edit"></i></button>
+                    <button type="button" class="btn btn-mini clsBtnAskDeleteItem" data-toggle="modal" data-target="#idDlgConfirmDeleteItem" data-cname-or-title="{{ item['cname'] if item['cname'] else item['title'] }}" data-urlsafe="{{ item.urlsafe }}" data-blobkey="{{ item.blob_key }}" title="Delete"><i class="icon-trash"></i></button>
                 </div>
             </td>
-            <td><img src="{{ prod['url'] }}=s300"></td>
-            {% if campaign.type == 'coupon' or campaign.type == 'preview' %}
-            <td class="item-brand">{{ prod['brand'] }}</td>
-            <td class="item-cname">{{ prod['cname'] }}</td>
-            <td class="item-ename">{{ prod['ename'] }}</td>
-            <td class="item-spec">{{ prod['spec'] }}</td>
-            <td class="item-code">{{ prod['code'] }}</td>
-            {% if campaign.type == 'coupon' %}
-            <td class="item-discount">{{ prod['discount'] }}</td>
+            <td><img src="{{ item['url'] }}=s300"></td>
+            {% if event.type == 'coupon' or event.type == 'preview' %}
+            <td class="item-brand">{{ item['brand'] }}</td>
+            <td class="item-cname">{{ item['cname'] }}</td>
+            <td class="item-ename">{{ item['ename'] }}</td>
+            <td class="item-spec">{{ item['spec'] }}</td>
+            <td class="item-code">{{ item['code'] }}</td>
+            {% if event.type == 'coupon' %}
+            <td class="item-discount">{{ item['discount'] }}</td>
             {% endif %}
-            <td class="item-price">{{ prod['price'] }}</td>
-            {% elif campaign.type == 'exhibition' %}
-            <td class="item-title">{{ prod['title'] }}</td>
-            <td class="item-start">{{ prod['start'] }}</td>
-            <td class="item-end">{{ prod['end'] }}</td>
+            <td class="item-price">{{ item['price'] }}</td>
+            {% elif event.type == 'exhibition' %}
+            <td class="item-title">{{ item['title'] }}</td>
+            <td class="item-start">{{ item['start'] }}</td>
+            <td class="item-end">{{ item['end'] }}</td>
             <td class="item-locations">
-                {%- for loc in prod['locations'] -%}
+                {%- for loc in item['locations'] -%}
                     {{ loc }}{% if not loop.last %} <br>{% endif %}
                 {%- endfor -%}
             </td>
-            {% elif campaign.type == 'announcement' %}
-            <td class="item-title">{{ prod['title'] }}</td>
-            <td class="item-content">{{ prod['content'] }}</td>
+            {% elif event.type == 'announcement' %}
+            <td class="item-title">{{ item['title'] }}</td>
+            <td class="item-content">{{ item['content'] }}</td>
             {% endif %}
         </tr>
         {% endfor %}
@@ -259,7 +259,7 @@
         <div class="modal-body">
             <input type="hidden" id="idItemTableRowId" value="">
             <input type="hidden" id="idEditedItemKeyUrlsafe" name="urlsafe" value="">
-            {% if campaign.type == 'coupon' %}
+            {% if event.type == 'coupon' %}
             <div class="control-group">
                 <label class="control-label">Brand</label>
                 <div class="controls">
@@ -302,7 +302,7 @@
                     <input id="idCouponPrice" name="price" type="text">
                 </div>
             </div>
-            {% elif campaign.type == 'preview' %}
+            {% elif event.type == 'preview' %}
             <div class="control-group">
                 <label class="control-label">Brand</label>
                 <div class="controls">
@@ -339,7 +339,7 @@
                     <input id="idPreviewPrice" name="price" type="text">
                 </div>
             </div>
-            {% elif campaign.type == 'exhibition' %}
+            {% elif event.type == 'exhibition' %}
             <div class="control-group">
                 <label class="control-label">Title</label>
                 <div class="controls">
@@ -374,7 +374,7 @@
                     </select>
                 </div>
             </div>
-            {% elif campaign.type == 'announcement' %}
+            {% elif event.type == 'announcement' %}
             <div class="control-group">
                 <label class="control-label">Title</label>
                 <div class="controls">
@@ -401,34 +401,34 @@
 {% block mediaJS %}
 <script type="text/javascript">
 $('#myCreateForm').on('shown', function() {
-    console.log('Product item create form is shown.');
+    console.log('Item create form is shown.');
     $('#btnText').text('Hide form');
     $('#btnIcon').removeClass('icon-chevron-down').addClass('icon-chevron-up');
 })
 $('#myCreateForm').on('hidden', function() {
-    console.log('Product item create form is hidden.');
+    console.log('Item create form is hidden.');
     $('#btnText').text('Show form');
     $('#btnIcon').removeClass('icon-chevron-up').addClass('icon-chevron-down');
 })
-$('#idNavbarBtnCampaignPublish').on('click', function(){
-    console.log('Prepare to publish campaign.');
-    $('#idTextConfirmPublishStateChanging').text('Are you sure you want to publish this campaign?');
+$('#idNavbarBtnEventPublish').on('click', function(){
+    console.log('Prepare to publish event.');
+    $('#idTextConfirmPublishStateChanging').text('Are you sure you want to publish this event?');
 })
-$('#idNavbarBtnCampaignUnpublish').on('click', function(){
-    console.log('Prepare to unpublish campaign.')
-    $('#idTextConfirmPublishStateChanging').text('Are you sure you want to unpublish this campaign?');
+$('#idNavbarBtnEventUnpublish').on('click', function(){
+    console.log('Prepare to unpublish event.')
+    $('#idTextConfirmPublishStateChanging').text('Are you sure you want to unpublish this event?');
 })
 $('#idBtnCancelPublishStateChangine').on('click', function(){
-    console.log('Cancel campaign publish state change!');
+    console.log('Cancel event publish state change!');
 })
 $('#idBtnConfirmPublishStateChanging').on('click', function(){
     var publish;
     var str_confirm = $('#idTextConfirmPublishStateChanging').text();
     if (~str_confirm.indexOf("unpublish")) {
-        console.log('Ready to unpublish campaign.');
+        console.log('Ready to unpublish event.');
         publish = false;
     } else if (~str_confirm.indexOf("publish")) {
-        console.log('Ready to publish campaign.');
+        console.log('Ready to publish event.');
         publish = true;
     } else {
         return;
@@ -436,26 +436,26 @@ $('#idBtnConfirmPublishStateChanging').on('click', function(){
 
     $.ajax({
         type: "PUT",
-        url: "/costco/campaign/{{ campaign.key.id() }}",
+        url: "/costco/event/{{ event.key.id() }}",
         data: {publish: publish}
     }).done(function(){
         if (publish) {
-            console.log('Campaign publish completed!');
-            $('#idNavbarBtnCampaignPublish').addClass('disabled');
-            $('#idNavbarBtnCampaignUnpublish').removeClass('disabled');
-            document.getElementById('idNavbarBtnCampaignPublish').setAttribute('disabled', 'disabled');
-            document.getElementById('idNavbarBtnCampaignUnpublish').removeAttribute('disabled');
-            /* advance campaign version */
-            var new_ver = parseInt($('#idTextVersion').text(), 10){% if campaign.modified %} + 1;{% else %};{% endif %}
+            console.log('Event publish completed!');
+            $('#idNavbarBtnEventPublish').addClass('disabled');
+            $('#idNavbarBtnEventUnpublish').removeClass('disabled');
+            document.getElementById('idNavbarBtnEventPublish').setAttribute('disabled', 'disabled');
+            document.getElementById('idNavbarBtnEventUnpublish').removeAttribute('disabled');
+            /* advance event version */
+            var new_ver = parseInt($('#idTextVersion').text(), 10){% if event.modified %} + 1;{% else %};{% endif %}
             $('#idTextVersion').text(new_ver.toString())
             /* empty notification label */
             $('#idLabelImportantNotification').text('')
         } else {
-            console.log('Campaign unpublish completed!');
-            $('#idNavbarBtnCampaignUnpublish').addClass('disabled');
-            $('#idNavbarBtnCampaignPublish').removeClass('disabled');
-            document.getElementById('idNavbarBtnCampaignUnpublish').setAttribute('disabled', 'disabled');
-            document.getElementById('idNavbarBtnCampaignPublish').removeAttribute('disabled');
+            console.log('Event unpublish completed!');
+            $('#idNavbarBtnEventUnpublish').addClass('disabled');
+            $('#idNavbarBtnEventPublish').removeClass('disabled');
+            document.getElementById('idNavbarBtnEventUnpublish').setAttribute('disabled', 'disabled');
+            document.getElementById('idNavbarBtnEventPublish').removeAttribute('disabled');
         }
     }).fail(function(){
         /* TODO: show some error */
@@ -479,10 +479,10 @@ $('#idBtnConfirmDeleteItem').on('click', function(){
     var blobkey = $('#idBlobKey').text();
     $.ajax({
         type: "DELETE",
-        url: "/costco/campaign/{{ campaign.key.id() }}?item_key=" + urlsafe + "&blob_key=" + blobkey,
+        url: "/costco/event/{{ event.key.id() }}?item_key=" + urlsafe + "&blob_key=" + blobkey,
     }).done(function(){
         console.log("Delete done.");
-        window.location.replace("/costco/campaign/{{ campaign.key.id() }}");
+        window.location.replace("/costco/event/{{ event.key.id() }}");
     }).fail(function(){
         console.log("Delete failed.");
     }).always(function(){
@@ -493,7 +493,7 @@ $('.clsBtnAskEditItem').on('click', function(){
 
     $('#idItemTableRowId').val($(this).closest('tr').attr('id')); /* backup the table row id which contains this edit button */
     $('#idEditedItemKeyUrlsafe').val($(this).data('urlsafe'));
-    {% if campaign.type == 'coupon' %}
+    {% if event.type == 'coupon' %}
         $('#idCouponBrand').val($(this).closest('tr').children('td.item-brand').text());
         $('#idCouponCName').val($(this).closest('tr').children('td.item-cname').text());
         $('#idCouponEName').val($(this).closest('tr').children('td.item-ename').text());
@@ -501,21 +501,21 @@ $('.clsBtnAskEditItem').on('click', function(){
         $('#idCouponCode').val($(this).closest('tr').children('td.item-code').text());
         $('#idCouponDiscount').val($(this).closest('tr').children('td.item-discount').text());
         $('#idCouponPrice').val($(this).closest('tr').children('td.item-price').text());
-    {% elif campaign.type == 'preview' %}
+    {% elif event.type == 'preview' %}
         $('#idPreviewBrand').val($(this).closest('tr').children('td.item-brand').text());
         $('#idPreviewCName').val($(this).closest('tr').children('td.item-cname').text());
         $('#idPreviewEName').val($(this).closest('tr').children('td.item-ename').text());
         $('#idPreviewSpec').val($(this).closest('tr').children('td.item-spec').text());
         $('#idPreviewCode').val($(this).closest('tr').children('td.item-code').text());
         $('#idPreviewPrice').val($(this).closest('tr').children('td.item-price').text());
-    {% elif campaign.type == 'exhibition' %}
+    {% elif event.type == 'exhibition' %}
         $('#idExhibitionTitle').val($(this).closest('tr').children('td.item-title').text());
         $('#idExhibitionStart').val($(this).closest('tr').children('td.item-start').text());
         $('#idExhibitionEnd').val($(this).closest('tr').children('td.item-end').text());
         var locations = $(this).closest('tr').children('td.item-locations').text();
         var arrayLocations = locations.split(' ');
         $('#idExhibitionLocations').val(arrayLocations);
-    {% elif campaign.type == 'announcement' %}
+    {% elif event.type == 'announcement' %}
         $('#idAnnouncementTitle').val($(this).closest('tr').children('td.item-title').text());
         $('#idAnnouncementContent').val($(this).closest('tr').children('td.item-content').text());
     {% endif %}
@@ -527,11 +527,11 @@ $('#idBtnConfirmEditItem').on('click', function(){
     console.log("Ready to edit item.");
 
     $.ajax({
-        url: "/costco/campaign/{{ campaign.key.id() }}",
+        url: "/costco/event/{{ event.key.id() }}",
         type: "PUT",
         data: {
             urlsafe: $('#idEditedItemKeyUrlsafe').val(),
-        {% if campaign.type == 'coupon' %}
+        {% if event.type == 'coupon' %}
             brand: $('#idCouponBrand').val(),
             cname: $('#idCouponCName').val(),
             ename: $('#idCouponEName').val(),
@@ -539,19 +539,19 @@ $('#idBtnConfirmEditItem').on('click', function(){
             code: $('#idCouponCode').val(),
             discount: $('#idCouponDiscount').val(),
             price: $('#idCouponPrice').val()
-        {% elif campaign.type == 'preview' %}
+        {% elif event.type == 'preview' %}
             brand: $('#idPreviewBrand').val(),
             cname: $('#idPreviewCName').val(),
             ename: $('#idPreviewEName').val(),
             spec: $('#idPreviewSpec').val(),
             code: $('#idPreviewCode').val(),
             price: $('#idPreviewPrice').val()
-        {% elif campaign.type == 'exhibition' %}
+        {% elif event.type == 'exhibition' %}
             title: $('#idExhibitionTitle').val(),
             start: $('#idExhibitionStart').val(),
             end: $('#idExhibitionEnd').val(),
             locations: $('#idExhibitionLocations').val()
-        {% elif campaign.type == 'announcement' %}
+        {% elif event.type == 'announcement' %}
             title: $('#idAnnouncementTitle').val(),
             content: $('#idAnnouncementContent').val()
         {% endif %}
@@ -559,15 +559,15 @@ $('#idBtnConfirmEditItem').on('click', function(){
     }).done(function(){
         console.log('Edit item done.');
         /* show re-publish if already published */
-        {% if campaign.published %}
+        {% if event.published %}
         $('#idLabelImportantNotification').text('Need re-publish')
         /* enable publish button */
-        $('#idNavbarBtnCampaignPublish').removeClass('disabled');
-        $('#idNavbarBtnCampaignPublish').attr('disabled', null);
+        $('#idNavbarBtnEventPublish').removeClass('disabled');
+        $('#idNavbarBtnEventPublish').attr('disabled', null);
         {% endif %}
         /* load modal values to table cells */
         var trid = $('#idItemTableRowId').val();
-        {% if campaign.type == 'coupon' %}
+        {% if event.type == 'coupon' %}
         $('#'+trid).children('td.item-brand').text($('#idCouponBrand').val());
         $('#'+trid).children('td.item-cname').text($('#idCouponCName').val());
         $('#'+trid).children('td.item-ename').text($('#idCouponEName').val());
@@ -575,20 +575,20 @@ $('#idBtnConfirmEditItem').on('click', function(){
         $('#'+trid).children('td.item-code').text($('#idCouponCode').val());
         $('#'+trid).children('td.item-discount').text($('#idCouponDiscount').val());
         $('#'+trid).children('td.item-price').text($('#idCouponPrice').val());
-        {% elif campaign.type == 'preview' %}
+        {% elif event.type == 'preview' %}
         $('#'+trid).children('td.item-brand').text($('#idPreviewBrand').val());
         $('#'+trid).children('td.item-cname').text($('#idPreviewCName').val());
         $('#'+trid).children('td.item-ename').text($('#idPreviewEName').val());
         $('#'+trid).children('td.item-spec').text($('#idPreviewSpec').val());
         $('#'+trid).children('td.item-code').text($('#idPreviewCode').val());
         $('#'+trid).children('td.item-price').text($('#idPreviewPrice').val());
-        {% elif campaign.type == 'exhibition' %}
+        {% elif event.type == 'exhibition' %}
         $('#'+trid).children('td.item-title').text($('#idExhibitionTitle').val());
         $('#'+trid).children('td.item-start').text($('#idExhibitionStart').val());
         $('#'+trid).children('td.item-end').text($('#idExhibitionEnd').val());
         var loc_array = $('#idExhibitionLocations').val();
         $('#'+trid).children('td.item-locations').html(loc_array.join(' <br>')); /* use html instead of text, so <br> represent correctly. */
-        {% elif campaign.type == 'announcement' %}
+        {% elif event.type == 'announcement' %}
         $('#'+trid).children('td.item-title').text($('#idAnnouncementTitle').val());
         $('#'+trid).children('td.item-content').text($('#idAnnouncementContent').val());
         {% endif %}
