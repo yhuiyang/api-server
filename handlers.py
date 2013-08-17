@@ -275,9 +275,15 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                 # check if still in published state
                 if eventEntity.published is True:
                     try:
-                        eventMgrEntity.listPublishedVersions.remove(intEventVer)
-                    except ValueError:
-                        logging.error('Remove non-exist version(%d) from published version list.' % intEventVer)
+                        # loop through meta and find index of this meta
+                        metaIdx = 0
+                        for meta in eventMgrEntity.listPublishedMeta:
+                            if meta.version == intEventVer:
+                                break
+                            metaIdx += 1
+                        del(eventMgrEntity.listPublishedMeta[metaIdx])
+                    except IndexError:
+                        logging.error('Remove non-exist version(%d) from published meta list.' % intEventVer)
 
                 # update event fields
                 if patchAdvance:
@@ -304,8 +310,8 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                 publishedEventEntity = models.PublishedEvent(id=str(intEventVer))
                 publishedEventEntity.event_data = event_data
 
-                # append event version number into published event version list
-                eventMgrEntity.listPublishedVersions.append(intEventVer)
+                # append event version number into published event meta list
+                eventMgrEntity.listPublishedMeta.append(models.PublishedMeta(version=intEventVer))
 
                 # update data store
                 ndb.put_multi([eventMgrEntity, eventEntity, publishedEventEntity])
@@ -321,9 +327,14 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                 eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
 
                 try:
-                    eventMgrEntity.listPublishedVersions.remove(intEventVer)
-                except ValueError:
-                    logging.error("Event is marked published, but doesn't exist in published event list!")
+                    metaIdx = 0
+                    for meta in eventMgrEntity.listPublishedMeta:
+                        if meta.version == intEventVer:
+                            break
+                        metaIdx += 1
+                    del(eventMgrEntity.listPublishedMeta[metaIdx])
+                except IndexError:
+                    logging.error("Event is marked published, but doesn't find in published event meta list!")
 
                 # update event fields
                 eventEntity.published = False
@@ -389,13 +400,15 @@ class ApiV1CostcoEvents(BaseHandler):
 
     def get(self):
 
-        # EventManager holds published event version number list
+        # EventManager holds published event meta list, which holds version number and created time for each event
         eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
-        resp = eventMgrEntity.listPublishedVersions
-        resp.sort(reverse=True)
+        int_version_list = []
+        for meta in eventMgrEntity.listPublishedMeta:
+            int_version_list.append(meta.version)
+        int_version_list.sort(reverse=True)
 
         self.response.content_type = 'application/json'
-        self.response.body = json.dumps(resp)
+        self.response.body = json.dumps(int_version_list)
 
 
 class ApiV1CostcoEventDetail(BaseHandler):
@@ -407,9 +420,15 @@ class ApiV1CostcoEventDetail(BaseHandler):
         strEventVer = event_id
         intEventVer = int(event_id)
 
-        # check if this is published event
+        # check if event with this version is published or not
         eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
-        if intEventVer not in eventMgrEntity.listPublishedVersions:
+        metaIdx = 0
+        for meta in eventMgrEntity.listPublishedMeta:
+            if meta.version == intEventVer:
+                break
+            metaIdx += 1
+        if metaIdx >= len(eventMgrEntity.listPublishedMeta):
+            logging.warning('Bad client! It requests an unpublished event!')
             resp = {'error': 'Requested event is not yet published!'}
             self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
             return

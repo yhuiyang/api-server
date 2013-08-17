@@ -27,8 +27,13 @@ from google.appengine.ext import ndb
 COSTCO_EVENT_MANAGER = 'CostcoEventManager'
 
 
+class PublishedMeta(ndb.Model):
+    version = ndb.IntegerProperty(indexed=False)
+    created = ndb.DateTimeProperty(auto_now_add=True, indexed=False)
+
+
 class EventManager(ndb.Model):  # one entity
-    listPublishedVersions = ndb.IntegerProperty(repeated=True, indexed=False)
+    listPublishedMeta = ndb.LocalStructuredProperty(PublishedMeta, repeated=True)
     lastCreatedVersion = ndb.IntegerProperty(default=0, indexed=False)
 
 
