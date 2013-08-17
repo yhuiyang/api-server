@@ -396,6 +396,29 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                 # self.redirect_to('costco-event-item-crud', event_id=event_id, _code=303)  # move redirect to client
 
 
+class ApiV1CostcoWhatsNew(BaseHandler):
+
+    def get(self):
+
+        # retrieve latest event timestamp in client side
+        str_client_latest = self.request.get('timestamp')
+        if str_client_latest:
+            int_client_latest = int(str_client_latest)
+        else:
+            int_client_latest = 0
+
+        # query event manager the newer events
+        eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
+        int_version_list = []
+        for meta in eventMgrEntity.listPublishedMeta:
+            if int_client_latest < int(meta.created.strftime('%s')):
+                int_version_list.append(meta.version)
+        int_version_list.sort(reverse=True)
+
+        self.response.content_type = 'application/json'
+        self.response.body = json.dumps(int_version_list)
+
+
 class ApiV1CostcoEvents(BaseHandler):
 
     def get(self):

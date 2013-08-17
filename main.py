@@ -35,6 +35,7 @@ _routes = [
                   name='costco-event-item-crud', strict_slash=True),
     RedirectRoute(r'/costco/events', handler=handlers.CostcoEventCRUD,
                   name='costco-event-crud', strict_slash=True),
+    webapp2.Route(r'/api/v1/costco/whatsnew', handler=handlers.ApiV1CostcoWhatsNew),
     webapp2.Route(r'/api/v1/costco/events', handler=handlers.ApiV1CostcoEvents),
     webapp2.Route(r'/api/v1/costco/event/<event_id:[1-9]\d*>', handlers.ApiV1CostcoEventDetail),
 ]
