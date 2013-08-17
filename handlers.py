@@ -439,6 +439,8 @@ class ApiV1CostcoEventDetail(BaseHandler):
             resp = {'error': 'Internal error!'}
         else:
             resp = publishedEventEntity.event_data
+            # append published event created epoch time
+            resp['created'] = int(eventMgrEntity.listPublishedMeta[metaIdx].created.strftime('%s'))
         self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
 
 
