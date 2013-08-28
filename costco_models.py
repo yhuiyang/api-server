@@ -72,11 +72,11 @@ class Item(ndb.Model):
         Fields provided by user input
         """
         if event_type == 'coupon':
-            fields = ['brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
+            fields = ['brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price', 'note']
         elif event_type == 'exhibition':
             fields = ['title', 'start', 'end', 'locations']
         elif event_type == 'preview':
-            fields = ['brand', 'cname', 'ename', 'spec', 'code', 'price']
+            fields = ['brand', 'cname', 'ename', 'spec', 'code', 'price', 'note']
         elif event_type == 'announcement':
             fields = ['title', 'content']
         else:
@@ -97,11 +97,12 @@ class Item(ndb.Model):
         Fields used on web management page
         """
         if event_type == 'coupon':
-            fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
+            fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price',
+                      'note']
         elif event_type == 'exhibition':
             fields = ['url', 'blob_key', 'urlsafe', 'title', 'start', 'end', 'locations']
         elif event_type == 'preview':
-            fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'price']
+            fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'price', 'note']
         elif event_type == 'announcement':
             fields = ['url', 'blob_key', 'urlsafe', 'title', 'content']
         else:
@@ -114,11 +115,11 @@ class Item(ndb.Model):
         Fields used by the app client
         """
         if event_type == 'coupon':
-            fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price']
+            fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price', 'note']
         elif event_type == 'exhibition':
             fields = ['url', 'filename', 'title', 'start', 'end', 'locations']
         elif event_type == 'preview':
-            fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'price']
+            fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'price', 'note']
         elif event_type == 'announcement':
             fields = ['url', 'filename', 'title', 'content']
         else:

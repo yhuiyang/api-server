@@ -306,7 +306,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
 
             return
 
-        # edit event item property
+        # edit event item properties
         urlsafeKey = self.request.get('urlsafe')
         if len(urlsafeKey) == 0:
             logging.error("Request doesn't contain a valid item urlsafe key.")

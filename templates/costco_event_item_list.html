@@ -92,6 +92,12 @@
                     <input type="text" name="price">
                 </div>
             </div>
+            <div class="control-group">
+                <label class="control-label" title="Item extra note">Extra note:</label>
+                <div class="controls">
+                    <input type="text" name="note">
+                </div>
+            </div>
             {% elif event.type == 'exhibition' %}
             <div class="control-group">
                 <label class="control-label" title="Exhibition title">Title:</label>
@@ -187,6 +193,7 @@
             <th>Discount</th>
             {% endif %}
             <th>Original Price</th>
+            <th>Note</th>
             {% elif event.type == 'exhibition' %}
             <th>Title</th>
             <th>Start date</th>
@@ -218,6 +225,7 @@
             <td class="item-discount">{{ item['discount'] }}</td>
             {% endif %}
             <td class="item-price">{{ item['price'] }}</td>
+            <td class="item-note">{{ item['note'] }}</td>
             {% elif event.type == 'exhibition' %}
             <td class="item-title">{{ item['title'] }}</td>
             <td class="item-start">{{ item['start'] }}</td>
@@ -302,6 +310,12 @@
                     <input id="idCouponPrice" name="price" type="text">
                 </div>
             </div>
+            <div class="control-group">
+                <label class="control-label">Note</label>
+                <div class="controls">
+                    <input id="idCouponNote" name="note" type="text">
+                </div>
+            </div>
             {% elif event.type == 'preview' %}
             <div class="control-group">
                 <label class="control-label">Brand</label>
@@ -337,6 +351,12 @@
                 <label class="control-label">Price</label>
                 <div class="controls">
                     <input id="idPreviewPrice" name="price" type="text">
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Note</label>
+                <div class="controls">
+                    <input id="idPreviewNote" name="note" type="text">
                 </div>
             </div>
             {% elif event.type == 'exhibition' %}
@@ -501,6 +521,7 @@ $('.clsBtnAskEditItem').on('click', function(){
         $('#idCouponCode').val($(this).closest('tr').children('td.item-code').text());
         $('#idCouponDiscount').val($(this).closest('tr').children('td.item-discount').text());
         $('#idCouponPrice').val($(this).closest('tr').children('td.item-price').text());
+        $('#idCouponNote').val($(this).closest('tr').children('td.item-note').text());
     {% elif event.type == 'preview' %}
         $('#idPreviewBrand').val($(this).closest('tr').children('td.item-brand').text());
         $('#idPreviewCName').val($(this).closest('tr').children('td.item-cname').text());
@@ -508,6 +529,7 @@ $('.clsBtnAskEditItem').on('click', function(){
         $('#idPreviewSpec').val($(this).closest('tr').children('td.item-spec').text());
         $('#idPreviewCode').val($(this).closest('tr').children('td.item-code').text());
         $('#idPreviewPrice').val($(this).closest('tr').children('td.item-price').text());
+        $('#idPreviewNote').val($(this).closest('tr').children('td.item-note').text());
     {% elif event.type == 'exhibition' %}
         $('#idExhibitionTitle').val($(this).closest('tr').children('td.item-title').text());
         $('#idExhibitionStart').val($(this).closest('tr').children('td.item-start').text());
@@ -538,14 +560,16 @@ $('#idBtnConfirmEditItem').on('click', function(){
             spec: $('#idCouponSpec').val(),
             code: $('#idCouponCode').val(),
             discount: $('#idCouponDiscount').val(),
-            price: $('#idCouponPrice').val()
+            price: $('#idCouponPrice').val(),
+            note: $('#idCouponNote').val()
         {% elif event.type == 'preview' %}
             brand: $('#idPreviewBrand').val(),
             cname: $('#idPreviewCName').val(),
             ename: $('#idPreviewEName').val(),
             spec: $('#idPreviewSpec').val(),
             code: $('#idPreviewCode').val(),
-            price: $('#idPreviewPrice').val()
+            price: $('#idPreviewPrice').val(),
+            note: $('#idPreviewNote').val()
         {% elif event.type == 'exhibition' %}
             title: $('#idExhibitionTitle').val(),
             start: $('#idExhibitionStart').val(),
@@ -575,6 +599,7 @@ $('#idBtnConfirmEditItem').on('click', function(){
         $('#'+trid).children('td.item-code').text($('#idCouponCode').val());
         $('#'+trid).children('td.item-discount').text($('#idCouponDiscount').val());
         $('#'+trid).children('td.item-price').text($('#idCouponPrice').val());
+        $('#'+trid).children('td.item-note').text($('#idCouponNote').val());
         {% elif event.type == 'preview' %}
         $('#'+trid).children('td.item-brand').text($('#idPreviewBrand').val());
         $('#'+trid).children('td.item-cname').text($('#idPreviewCName').val());
@@ -582,6 +607,7 @@ $('#idBtnConfirmEditItem').on('click', function(){
         $('#'+trid).children('td.item-spec').text($('#idPreviewSpec').val());
         $('#'+trid).children('td.item-code').text($('#idPreviewCode').val());
         $('#'+trid).children('td.item-price').text($('#idPreviewPrice').val());
+        $('#'+trid).children('td.item-note').text($('#idPreviewNote').val());
         {% elif event.type == 'exhibition' %}
         $('#'+trid).children('td.item-title').text($('#idExhibitionTitle').val());
         $('#'+trid).children('td.item-start').text($('#idExhibitionStart').val());
