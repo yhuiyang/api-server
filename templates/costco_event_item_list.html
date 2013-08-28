@@ -38,7 +38,7 @@
 
 {% block content %}
 <div id="myCreateForm"  class="collapse">
-    <form class="form-horizontal form-background" action="{{ post_url }}" method="post" enctype="multipart/form-data">
+    <form class="form-horizontal form-background" action="never_post_to_here" method="post" enctype="multipart/form-data">
         <fieldset>
             <legend>Create New Item (Type: {{ event.type | capitalize }})</legend>
             <div class="control-group">
@@ -142,7 +142,7 @@
             </div>
             {% endif %}
             <div class="form-action">
-                <button type="submit" class="btn btn-primary">Create</button>
+                <button type="button" id="idBtnGetUploadUrl" class="btn btn-primary">Create</button>
                 <button type="button" class="btn">Reset</button>
             </div>
         </fieldset>
@@ -596,6 +596,26 @@ $('#idBtnConfirmEditItem').on('click', function(){
         console.log('Edit item failed.');
     }).always(function(){
     });
+})
+$('#idBtnGetUploadUrl').on('click', function(){
+
+    console.log('Retrieve blob upload url');
+
+    $.get("/costco/event/{{ event.key.id() }}/upload"
+    ).done(function(data){
+        var upload_url = data[0]
+        console.log('url: ' + upload_url);
+
+        /* update attribute action of 1st form to upload_url */
+        $('form:first').attr('action', upload_url);
+
+        /* submit first form */
+        $('form:first').trigger('submit');
+
+    }).fail(function(){
+        console.log('Retrieve upload url failed!');
+    }).always(function(){
+    })
 })
 </script>
 {% endblock %}

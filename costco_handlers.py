@@ -146,13 +146,9 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
             item_list.append(item_prop)
         logging.debug(item_list)
 
-        # the url to post to blobstore is dynamically generated, when blobstore saving completed, GAE will invoke
-        # our callback which was setup in blobstore.create_upload_url(THIS_IS_APP_POST_CALLBACK_URL)
-        myPostHandlerUrl = self.uri_for('costco-event-item-crud', event_id=event_id)
         params = {
             'app_name': 'Costco',
             'event': eventEntity,
-            'post_url': blobstore.create_upload_url(myPostHandlerUrl),
             'Items': item_list,
         }
         self.render_response('costco_event_item_list.html', **params)
