@@ -81,12 +81,7 @@
             </div>
             {% elif event.type == 'announcement' %}
                 {{ macros.input_field("title", "Title", class="input-xlarge", tooltip="Announcement title") }}
-            <div class="control-group">
-                <label class="control-label" title="Announcement detailed content">Content:</label>
-                <div class="controls">
-                    <textarea class="input-xxlarge" rows="5" name="content" required></textarea>
-                </div>
-            </div>
+                {{ macros.textarea_field("content", "Content", class="input-xxlarge", rows="5", tooltip="Announcement detailed content") }}
             {% endif %}
             <div class="form-action">
                 <button type="button" id="idBtnGetUploadUrl" class="btn btn-primary">Create</button>
@@ -247,12 +242,7 @@
             </div>
             {% elif event.type == 'announcement' %}
                 {{ macros.input_field("title", "Title", id="idAnnouncementTitle") }}
-            <div class="control-group">
-                <label class="control-label">Content</label>
-                <div class="controls">
-                    <textarea id="idAnnouncementContent" class="input-block-level" rows="5" name="content"></textarea>
-                </div>
-            </div>
+                {{ macros.textarea_field("content", "Content", id="idAnnouncementContent", class="input-block-level", rows="5") }}
             {% endif %}
         </div>
         <div class="modal-footer">

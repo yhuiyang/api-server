@@ -6,3 +6,12 @@
         </div>
     </div>
 {%- endmacro %}
+
+{% macro textarea_field(name, label, rows='2', id='', class='', tooltip='') %}
+    <div class="control-group">
+        <label class="control-label"{% if tooltip %}title="{{ tooltip }}"{% endif %}>{{ label }}:</label>
+        <div class="controls">
+            <textarea{% if id %} id="{{ id }}"{% endif %}{% if class %} class="{{ class }}"{% endif %} rows="{{ rows }}" name="{{ name }}"></textarea>
+        </div>
+    </div>
+{%- endmacro %}
