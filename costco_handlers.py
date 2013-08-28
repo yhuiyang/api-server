@@ -23,8 +23,8 @@ from datetime import date
 
 # GAE imports
 import webapp2
-from webapp2_extras import jinja2
 from webapp2_extras.appengine.users import admin_required
+from webapp2_extras.routes import RedirectRoute
 from google.appengine.api import images
 from google.appengine.api import memcache
 from google.appengine.api import users
@@ -33,42 +33,8 @@ from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 
 # local imports
-import models
-
-
-class BaseHandler(webapp2.RequestHandler):
-    """ Simple base handler for Jinja2 template rendering. """
-
-    @webapp2.cached_property
-    def jinja2(self):
-        """Cached property holding a Jinja2 instance.
-
-        Returns:
-            A Jinja2 object for the current app.
-        """
-        return jinja2.get_jinja2(app=self.app)
-
-    def render_response(self, template, **kwargs):
-        """Use Jinja2 instance to render template and write to output.
-
-        Args:
-            template: filename (relative to $PROJECT/templates) that we are
-                      rendering.
-            kwargs: keyword arguments corresponding to variables in template.
-        """
-        rendered_value = self.jinja2.render_template(template, **kwargs)
-        self.response.write(rendered_value)
-
-
-class Dashboard(BaseHandler):
-
-    @admin_required
-    def get(self):
-
-        params = {
-            'app_name': 'Dashboard'
-        }
-        self.render_response("dashboard.html", **params)
+import costco_models
+from base_handlers import BaseHandler
 
 
 class CostcoEventCRUD(BaseHandler):
@@ -82,7 +48,7 @@ class CostcoEventCRUD(BaseHandler):
         """
         allEventMajorVersionList = getCachedCostcoAllEventMajorVersions('list')
         if allEventMajorVersionList is None:
-            allEventInDatastore = models.Event.query()
+            allEventInDatastore = costco_models.Event.query()
             eventMajorVerList = []
             for ver in allEventInDatastore:
                 eventMajorVerList.append(int(ver.key.id()))
@@ -103,7 +69,7 @@ class CostcoEventCRUD(BaseHandler):
         events = []
         for majorVerInt in eventMajorVerList:
             event = {}
-            eventEntity = models.Event.get_by_id(str(majorVerInt))
+            eventEntity = costco_models.Event.get_by_id(str(majorVerInt))
             event['start'] = eventEntity.start
             event['end'] = eventEntity.end
             event['published'] = eventEntity.published
@@ -135,17 +101,17 @@ class CostcoEventCRUD(BaseHandler):
         sY, sM, sD = start_date.split('-')
         eY, eM, eD = end_date.split('-')
 
-        mgrKey = ndb.Key(models.EventManager, models.COSTCO_EVENT_MANAGER)
+        mgrKey = ndb.Key(costco_models.EventManager, costco_models.COSTCO_EVENT_MANAGER)
         mgrEntity = mgrKey.get()
         if mgrEntity is None:
             logging.debug('''Manager entity doesn't exist yet''')
-            mgrEntity = models.EventManager(id=models.COSTCO_EVENT_MANAGER)
+            mgrEntity = costco_models.EventManager(id=costco_models.COSTCO_EVENT_MANAGER)
             newVer = 100
         else:
             newVer = mgrEntity.lastCreatedVersion + 100
 
         mgrEntity.lastCreatedVersion = newVer
-        event = models.Event(id=str(newVer))
+        event = costco_models.Event(id=str(newVer))
         event.start = date(int(sY), int(sM), int(sD))
         event.end = date(int(eY), int(eM), int(eD))
         event.type = type
@@ -164,15 +130,15 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
     def get(self, event_id):
 
         # find all items belongs to this event
-        allItems = models.Item.get_event_items(event_id)
+        allItems = costco_models.Item.get_event_items(event_id)
 
         # populate item_list for later rendering
-        eventKey = ndb.Key(models.Event, str((int(event_id) / 100) * 100))
+        eventKey = ndb.Key(costco_models.Event, str((int(event_id) / 100) * 100))
         eventEntity = eventKey.get()
         item_list = []
         for item in allItems:
             item_prop = {}
-            for n in models.Item.get_web_fields(eventEntity.type):
+            for n in costco_models.Item.get_web_fields(eventEntity.type):
                 if n == 'urlsafe':
                     item_prop[n] = item.key.urlsafe()
                 else:
@@ -203,7 +169,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         data_dict = dict()
         # collect item image meta data
         # blobstore.BlobInfo.properties() = set(['creation', 'content_type', 'md5_hash', 'size', 'fielname'])
-        for prop in models.Item.get_blob_fields():
+        for prop in costco_models.Item.get_blob_fields():
             if prop == 'url':
                 data_dict[prop] = images.get_serving_url(blob_key)
             elif prop == 'creation':
@@ -222,8 +188,8 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         # collect item info
         int_event_id = int(event_id)
         event_key = str((int_event_id / 100) * 100)
-        eventEntity = models.Event.get_by_id(event_key)
-        for prop in models.Item.get_user_fields(eventEntity.type):
+        eventEntity = costco_models.Event.get_by_id(event_key)
+        for prop in costco_models.Item.get_user_fields(eventEntity.type):
             if prop == 'locations':
                 data_dict[prop] = self.request.get_all(prop)
             else:
@@ -233,7 +199,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         eventEntity.modified = True
 
         # create new item in datastore
-        item = models.Item(parent=eventEntity.key)
+        item = costco_models.Item(parent=eventEntity.key)
         item.data = data_dict
 
         # update datastore
@@ -248,7 +214,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
 
         intEventMajorVer = (int(event_id) / 100) * 100
         strEventMajorVer = str(intEventMajorVer)
-        eventKey = ndb.Key(models.Event, strEventMajorVer)
+        eventKey = ndb.Key(costco_models.Event, strEventMajorVer)
 
         eventEntity = eventKey.get()
         if eventEntity is None:
@@ -270,7 +236,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                     patchAdvance = False
 
                 # retrieve event manager
-                eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
+                eventMgrEntity = costco_models.EventManager.get_or_insert(costco_models.COSTCO_EVENT_MANAGER)
 
                 # check if still in published state
                 if eventEntity.published is True:
@@ -300,18 +266,18 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                 event_data['end'] = eventEntity.end.isoformat()
                 event_data['type'] = eventEntity.type
                 event_data['items'] = []
-                allEventItems = models.Item.get_event_items(event_id)
+                allEventItems = costco_models.Item.get_event_items(event_id)
                 for item in allEventItems:
                     item_published_data = dict()
-                    for prop in models.Item.get_published_fields(eventEntity.type):
+                    for prop in costco_models.Item.get_published_fields(eventEntity.type):
                         item_published_data[prop] = item.data[prop]
                     event_data['items'].append(item_published_data)
 
-                publishedEventEntity = models.PublishedEvent(id=str(intEventVer))
+                publishedEventEntity = costco_models.PublishedEvent(id=str(intEventVer))
                 publishedEventEntity.event_data = event_data
 
                 # append event version number into published event meta list
-                eventMgrEntity.listPublishedMeta.append(models.PublishedMeta(version=intEventVer))
+                eventMgrEntity.listPublishedMeta.append(costco_models.PublishedMeta(version=intEventVer))
 
                 # update data store
                 ndb.put_multi([eventMgrEntity, eventEntity, publishedEventEntity])
@@ -324,7 +290,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                     self.abort(406)  # not acceptable
 
                 # retrieve event manager
-                eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
+                eventMgrEntity = costco_models.EventManager.get_or_insert(costco_models.COSTCO_EVENT_MANAGER)
 
                 try:
                     metaIdx = 0
@@ -357,7 +323,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
             self.abort(404)
 
         item_data = itemEntity.data
-        for prop in models.Item.get_user_fields(eventEntity.type):
+        for prop in costco_models.Item.get_user_fields(eventEntity.type):
             old = item_data[prop]
             if prop in ['locations']:
                 new = self.request.get_all('locations[]')
@@ -388,7 +354,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
             ndb.Key(urlsafe=strItemKey).delete()
             intEventId = int(event_id)
             keyEventId = str((intEventId / 100) * 100)
-            eventEntity = models.Event.get_by_id(keyEventId)
+            eventEntity = costco_models.Event.get_by_id(keyEventId)
             # mark event dirty
             if eventEntity is not None:
                 eventEntity.modified = True
@@ -408,7 +374,7 @@ class ApiV1CostcoWhatsNew(BaseHandler):
             int_client_latest = 0
 
         # query event manager the newer events
-        eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
+        eventMgrEntity = costco_models.EventManager.get_or_insert(costco_models.COSTCO_EVENT_MANAGER)
         int_version_list = []
         for meta in eventMgrEntity.listPublishedMeta:
             if int_client_latest < int(meta.created.strftime('%s')):
@@ -424,7 +390,7 @@ class ApiV1CostcoEvents(BaseHandler):
     def get(self):
 
         # EventManager holds published event meta list, which holds version number and created time for each event
-        eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
+        eventMgrEntity = costco_models.EventManager.get_or_insert(costco_models.COSTCO_EVENT_MANAGER)
         int_version_list = []
         for meta in eventMgrEntity.listPublishedMeta:
             int_version_list.append(meta.version)
@@ -444,7 +410,7 @@ class ApiV1CostcoEventDetail(BaseHandler):
         intEventVer = int(event_id)
 
         # check if event with this version is published or not
-        eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
+        eventMgrEntity = costco_models.EventManager.get_or_insert(costco_models.COSTCO_EVENT_MANAGER)
         metaIdx = 0
         for meta in eventMgrEntity.listPublishedMeta:
             if meta.version == intEventVer:
@@ -456,7 +422,7 @@ class ApiV1CostcoEventDetail(BaseHandler):
             self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
             return
 
-        publishedEventEntity = models.PublishedEvent.get_by_id(strEventVer)
+        publishedEventEntity = costco_models.PublishedEvent.get_by_id(strEventVer)
         if publishedEventEntity is None:
             logging.error('There is version number in published version list, but not published event entity!')
             resp = {'error': 'Internal error!'}
@@ -515,3 +481,13 @@ def appendCachedCostcoAllEventMajorVersions(intMajorVersion):
         list = []
     list.append(intMajorVersion)
     setCachedCostcoAllEventMajorVersions(list)
+
+routes = [
+    RedirectRoute(r'/costco/event/<event_id:[1-9]\d*>', handler=CostcoEventItemCRUD,
+                  name='costco-event-item-crud', strict_slash=True),
+    RedirectRoute(r'/costco/events', handler=CostcoEventCRUD,
+                  name='costco-event-crud', strict_slash=True),
+    webapp2.Route(r'/api/v1/costco/whatsnew', handler=ApiV1CostcoWhatsNew),
+    webapp2.Route(r'/api/v1/costco/events', handler=ApiV1CostcoEvents),
+    webapp2.Route(r'/api/v1/costco/event/<event_id:[1-9]\d*>', ApiV1CostcoEventDetail),
+]

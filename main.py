@@ -20,24 +20,17 @@ import os
 
 # GAE imports
 import webapp2
-from webapp2_extras.routes import RedirectRoute
 
 # local imports
-import handlers
+from base_handlers import routes as base_routes
+from costco_handlers import routes as costco_routes
 
 
 _debug = os.environ.get('SERVER_SOFTWARE').startswith('Dev')
 _config = {}
-_routes = [
-    RedirectRoute(r'/', redirect_to='dashboard', name='home', strict_slash=True),
-    RedirectRoute(r'/dashboard', handler=handlers.Dashboard, name='dashboard', strict_slash=True),
-    RedirectRoute(r'/costco/event/<event_id:[1-9]\d*>', handler=handlers.CostcoEventItemCRUD,
-                  name='costco-event-item-crud', strict_slash=True),
-    RedirectRoute(r'/costco/events', handler=handlers.CostcoEventCRUD,
-                  name='costco-event-crud', strict_slash=True),
-    webapp2.Route(r'/api/v1/costco/whatsnew', handler=handlers.ApiV1CostcoWhatsNew),
-    webapp2.Route(r'/api/v1/costco/events', handler=handlers.ApiV1CostcoEvents),
-    webapp2.Route(r'/api/v1/costco/event/<event_id:[1-9]\d*>', handlers.ApiV1CostcoEventDetail),
-]
+_routes = []
+
+_routes.extend(base_routes)
+_routes.extend(costco_routes)
 
 app = webapp2.WSGIApplication(routes=_routes, config=_config, debug=_debug)
