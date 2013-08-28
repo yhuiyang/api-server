@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "macros.html" as macros %}
 
 {% block mediaCSS %}
 <style type="text/css">
@@ -48,75 +49,20 @@
                 </div>
             </div>
             {% if event.type == 'coupon' or event.type == 'preview' %}
-            <div class="control-group">
-                <label class="control-label" title="Item brand name">Brand:</label>
-                <div class="controls">
-                    <input type="text" name="brand" required>
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" title="Item Chinese name">Chinese name:</label>
-                <div class="controls">
-                    <input type="text" name="cname" required>
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" title="Item English name">English name:</label>
-                <div class="controls">
-                    <input type="text" name="ename" required="">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" title="Item spec or model name">Spec:</label>
-                <div class="controls">
-                    <input type="text" name="spec">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" title="Costco coupon code">Costco Code:</label>
-                <div class="controls">
-                    <input type="text" name="code">
-                </div>
-            </div>
+                {{ macros.input_field("brand", "Brand", tooltip="Item brand name") }}
+                {{ macros.input_field("cname", "Chinese name", tooltip="Item Chinese name") }}
+                {{ macros.input_field("ename", "English name", tooltip="Item English name") }}
+                {{ macros.input_field("spec", "Spec", tooltip="Item spec or model name") }}
+                {{ macros.input_field("code", "Costco Code", tooltip="Costco item code") }}
             {% if event.type == 'coupon' %}
-            <div class="control-group">
-                <label class="control-label" title="Item discount in this event">Discount:</label>
-                <div class="controls">
-                    <input type="text" name="discount" required>
-                </div>
-            </div>
+                {{ macros.input_field("discount", "Discount", tooltip="Item discount in this events offers") }}
             {% endif %}
-            <div class="control-group">
-                <label class="control-label" title="Item original price">Original price:</label>
-                <div class="controls">
-                    <input type="text" name="price">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" title="Item extra note">Extra note:</label>
-                <div class="controls">
-                    <input type="text" name="note">
-                </div>
-            </div>
+                {{ macros.input_field("price", "Original price", tooltip="Item original price") }}
+                {{ macros.input_field("note", "Extra note", tooltip="Item extra note") }}
             {% elif event.type == 'exhibition' %}
-            <div class="control-group">
-                <label class="control-label" title="Exhibition title">Title:</label>
-                <div class="controls">
-                    <input class="input-xlarge" type="text" name="title" required>
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" title="Exhibition start date">Start date</label>
-                <div class="controls">
-                    <input type="date" name="start" required>
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label" title="Exhibition end date">End date</label>
-                <div class="controls">
-                    <input type="date" name="end" required>
-                </div>
-            </div>
+                {{ macros.input_field("title", "Title", tooltip="Exhibition title", class="input-xlarge") }}
+                {{ macros.input_field("start", "Start date", type="date", tooltip="Exhibition start date") }}
+                {{ macros.input_field("end", "End date", type="date", tooltip="Exhibition end date") }}
             <div class="control-group">
                 <label class="control-label" title="Exhibition locations, multiple choices">Locations</label>
                 <div class="controls">
@@ -134,12 +80,7 @@
                 </div>
             </div>
             {% elif event.type == 'announcement' %}
-            <div class="control-group">
-                <label class="control-label" title="Announcement title">Title:</label>
-                <div class="controls">
-                    <input class="input-xlarge" type="text" name="title" required>
-                </div>
-            </div>
+                {{ macros.input_field("title", "Title", class="input-xlarge", tooltip="Announcement title") }}
             <div class="control-group">
                 <label class="control-label" title="Announcement detailed content">Content:</label>
                 <div class="controls">
@@ -268,116 +209,26 @@
             <input type="hidden" id="idItemTableRowId" value="">
             <input type="hidden" id="idEditedItemKeyUrlsafe" name="urlsafe" value="">
             {% if event.type == 'coupon' %}
-            <div class="control-group">
-                <label class="control-label">Brand</label>
-                <div class="controls">
-                    <input id="idCouponBrand" name="brand" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">CName</label>
-                <div class="controls">
-                    <input id="idCouponCName" name="cname" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">EName</label>
-                <div class="controls">
-                    <input id="idCouponEName" name="ename" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">Spec</label>
-                <div class="controls">
-                    <input id="idCouponSpec" name="spec" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">Code</label>
-                <div class="controls">
-                    <input id="idCouponCode" name="code" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">Discount</label>
-                <div class="controls">
-                    <input id="idCouponDiscount" name="discount" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">Price</label>
-                <div class="controls">
-                    <input id="idCouponPrice" name="price" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">Note</label>
-                <div class="controls">
-                    <input id="idCouponNote" name="note" type="text">
-                </div>
-            </div>
+                {{ macros.input_field("brand", "Brand", id="idCouponBrand") }}
+                {{ macros.input_field("cname", "CName", id="idCouponCName") }}
+                {{ macros.input_field("ename", "EName", id="idCouponEName") }}
+                {{ macros.input_field("spec", "Spec", id="idCouponSpec") }}
+                {{ macros.input_field("code", "Code", id="idCouponCode") }}
+                {{ macros.input_field("discount", "Discount", id="idCouponDiscount") }}
+                {{ macros.input_field("price", "Price", id="idCouponPrice") }}
+                {{ macros.input_field("note", "Note", id="idCouponNote") }}
             {% elif event.type == 'preview' %}
-            <div class="control-group">
-                <label class="control-label">Brand</label>
-                <div class="controls">
-                    <input id="idPreviewBrand" name="brand" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">CName</label>
-                <div class="controls">
-                    <input id="idPreviewCName" name="cname" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">EName</label>
-                <div class="controls">
-                    <input id="idPreviewEName" name="ename" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">Spec</label>
-                <div class="controls">
-                    <input id="idPreviewSpec" name="spec" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">Code</label>
-                <div class="controls">
-                    <input id="idPreviewCode" name="code" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">Price</label>
-                <div class="controls">
-                    <input id="idPreviewPrice" name="price" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">Note</label>
-                <div class="controls">
-                    <input id="idPreviewNote" name="note" type="text">
-                </div>
-            </div>
+                {{ macros.input_field("brand", "Brand", id="idPreviewBrand") }}
+                {{ macros.input_field("cname", "CName", id="idPreviewCName") }}
+                {{ macros.input_field("ename", "EName", id="idPreviewEName") }}
+                {{ macros.input_field("spec", "Spec", id="idPreviewSpec") }}
+                {{ macros.input_field("code", "Code", id="idPreviewCode") }}
+                {{ macros.input_field("price", "Price", id="idPreviewPrice") }}
+                {{ macros.input_field("note", "Note", id="idPreviewNote") }}
             {% elif event.type == 'exhibition' %}
-            <div class="control-group">
-                <label class="control-label">Title</label>
-                <div class="controls">
-                    <input id="idExhibitionTitle" name="title" type="text">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">Start</label>
-                <div class="controls">
-                    <input id="idExhibitionStart" name="start" type="date">
-                </div>
-            </div>
-            <div class="control-group">
-                <label class="control-label">End</label>
-                <div class="controls">
-                    <input id="idExhibitionEnd" name="end" type="date">
-                </div>
-            </div>
+                {{ macros.input_field("title", "Title", id="idExhibitionTitle") }}
+                {{ macros.input_field("start", "Start", type="date", id="idExhibitionStart") }}
+                {{ macros.input_field("end", "End", type="date", id="idExhibitionEnd") }}
             <div class="control-group">
                 <label class="control-label">Locations</label>
                 <div class="controls">
@@ -395,12 +246,7 @@
                 </div>
             </div>
             {% elif event.type == 'announcement' %}
-            <div class="control-group">
-                <label class="control-label">Title</label>
-                <div class="controls">
-                    <input id="idAnnouncementTitle" name="title" type="text">
-                </div>
-            </div>
+                {{ macros.input_field("title", "Title", id="idAnnouncementTitle") }}
             <div class="control-group">
                 <label class="control-label">Content</label>
                 <div class="controls">
