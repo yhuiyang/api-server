@@ -54,9 +54,10 @@
                 {{ macros.textarea_field("ename", "English name", tooltip="Item English name") }}
                 {{ macros.textarea_field("spec", "Spec", tooltip="Item spec or model name") }}
                 {{ macros.textarea_field("code", "Costco Code", tooltip="Costco item code") }}
-            {% if event.type == 'coupon' %}
+                {% if event.type == 'coupon' %}
                 {{ macros.input_field("discount", "Discount", tooltip="Item discount in this events offers") }}
-            {% endif %}
+                {{ macros.input_field("unit", "Unit", tooltip="Discount unit. ex: /KG") }}
+                {% endif %}
                 {{ macros.input_field("price", "Original price", tooltip="Item original price") }}
                 {{ macros.textarea_field("note", "Extra note", tooltip="Item extra note") }}
             {% elif event.type == 'exhibition' %}
@@ -127,6 +128,7 @@
             <th>Costco Code</th>
             {% if event.type == 'coupon' %}
             <th>Discount</th>
+            <th>Unit</th>
             {% endif %}
             <th>Original Price</th>
             <th>Note</th>
@@ -159,6 +161,7 @@
             <td class="item-code">{{ item['code'] }}</td>
             {% if event.type == 'coupon' %}
             <td class="item-discount">{{ item['discount'] }}</td>
+            <td class="item-unit">{{ item['unit'] }}</td>
             {% endif %}
             <td class="item-price">{{ item['price'] }}</td>
             <td class="item-note">{{ item['note'] }}</td>
@@ -210,6 +213,7 @@
                 {{ macros.textarea_field("spec", "Spec", id="idCouponSpec") }}
                 {{ macros.textarea_field("code", "Code", id="idCouponCode") }}
                 {{ macros.input_field("discount", "Discount", id="idCouponDiscount") }}
+                {{ macros.input_field("unit", "Unit", id="idCouponUnit") }}
                 {{ macros.input_field("price", "Price", id="idCouponPrice") }}
                 {{ macros.textarea_field("note", "Note", id="idCouponNote") }}
             {% elif event.type == 'preview' %}
@@ -356,6 +360,7 @@ $('.clsBtnAskEditItem').on('click', function(){
         $('#idCouponSpec').val($(this).closest('tr').children('td.item-spec').text());
         $('#idCouponCode').val($(this).closest('tr').children('td.item-code').text());
         $('#idCouponDiscount').val($(this).closest('tr').children('td.item-discount').text());
+        $('#idCouponUnit').val($(this).closest('tr').children('td.item-unit').text());
         $('#idCouponPrice').val($(this).closest('tr').children('td.item-price').text());
         $('#idCouponNote').val($(this).closest('tr').children('td.item-note').text());
     {% elif event.type == 'preview' %}
@@ -396,6 +401,7 @@ $('#idBtnConfirmEditItem').on('click', function(){
             spec: $('#idCouponSpec').val(),
             code: $('#idCouponCode').val(),
             discount: $('#idCouponDiscount').val(),
+            unit: $('#idCouponUnit').val(),
             price: $('#idCouponPrice').val(),
             note: $('#idCouponNote').val()
         {% elif event.type == 'preview' %}
@@ -434,6 +440,7 @@ $('#idBtnConfirmEditItem').on('click', function(){
         $('#'+trid).children('td.item-spec').text($('#idCouponSpec').val());
         $('#'+trid).children('td.item-code').text($('#idCouponCode').val());
         $('#'+trid).children('td.item-discount').text($('#idCouponDiscount').val());
+        $('#'+trid).children('td.item-unit').text($('#idCouponUnit').val());
         $('#'+trid).children('td.item-price').text($('#idCouponPrice').val());
         $('#'+trid).children('td.item-note').text($('#idCouponNote').val());
         {% elif event.type == 'preview' %}

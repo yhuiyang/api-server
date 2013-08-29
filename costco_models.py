@@ -72,7 +72,7 @@ class Item(ndb.Model):
         Fields provided by user input
         """
         if event_type == 'coupon':
-            fields = ['brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price', 'note']
+            fields = ['brand', 'cname', 'ename', 'spec', 'code', 'discount', 'unit', 'price', 'note']
         elif event_type == 'exhibition':
             fields = ['title', 'start', 'end', 'locations']
         elif event_type == 'preview':
@@ -97,8 +97,8 @@ class Item(ndb.Model):
         Fields used on web management page
         """
         if event_type == 'coupon':
-            fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price',
-                      'note']
+            fields = ['url', 'blob_key', 'urlsafe', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'unit',
+                      'price', 'note']
         elif event_type == 'exhibition':
             fields = ['url', 'blob_key', 'urlsafe', 'title', 'start', 'end', 'locations']
         elif event_type == 'preview':
@@ -115,7 +115,7 @@ class Item(ndb.Model):
         Fields used by the app client
         """
         if event_type == 'coupon':
-            fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'price', 'note']
+            fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'unit', 'price', 'note']
         elif event_type == 'exhibition':
             fields = ['url', 'filename', 'title', 'start', 'end', 'locations']
         elif event_type == 'preview':
