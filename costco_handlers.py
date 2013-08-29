@@ -189,7 +189,10 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
             if prop == 'locations':
                 data_dict[prop] = self.request.get_all(prop)
             else:
-                data_dict[prop] = self.request.get(prop)
+                user_input_str = self.request.get(prop)
+                data_dict[prop] = user_input_str.replace('\r', '')
+
+        #logging.debug(data_dict)  # logging all input data
 
         # mark event dirty
         eventEntity.modified = True
