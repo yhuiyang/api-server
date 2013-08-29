@@ -168,7 +168,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         for prop in costco_models.Item.get_blob_fields():
             if prop == 'url':
                 data_dict[prop] = images.get_serving_url(blob_key)
-            elif prop == 'creation':
+            elif prop == 'blob_creation':
                 data_dict[prop] = blob_info.creation.isoformat()
             elif prop == 'content_type':
                 data_dict[prop] = blob_info.content_type
@@ -180,6 +180,14 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                 data_dict[prop] = blob_info.filename
             elif prop == 'blob_key':
                 data_dict[prop] = str(blob_key)
+            elif prop == 'img_height':
+                img = images.Image(blob_key=blob_key)
+                img.im_feeling_lucky()
+                img.execute_transforms()
+                data_dict['img_height'] = str(img.height)
+                data_dict['img_width'] = str(img.width)
+            elif prop == 'img_width':
+                pass  # do nothing
 
         # collect item info
         int_event_id = int(event_id)

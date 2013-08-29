@@ -88,7 +88,8 @@ class Item(ndb.Model):
         """
         Fields provided by blobstore and image service
         """
-        fields = ['url', 'creation', 'content_type', 'md5_hash', 'size', 'filename', 'blob_key']
+        fields = ['url', 'blob_creation', 'content_type', 'md5_hash', 'size', 'filename', 'blob_key', 'img_height',
+                  'img_width']
         return fields
 
     @classmethod
@@ -115,13 +116,15 @@ class Item(ndb.Model):
         Fields used by the app client
         """
         if event_type == 'coupon':
-            fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'discount', 'unit', 'price', 'note']
+            fields = ['url', 'filename', 'img_height', 'img_width', 'brand', 'cname', 'ename', 'spec', 'code',
+                      'discount', 'unit', 'price', 'note']
         elif event_type == 'exhibition':
-            fields = ['url', 'filename', 'title', 'start', 'end', 'locations']
+            fields = ['url', 'filename', 'img_height', 'img_width', 'title', 'start', 'end', 'locations']
         elif event_type == 'preview':
-            fields = ['url', 'filename', 'brand', 'cname', 'ename', 'spec', 'code', 'price', 'note']
+            fields = ['url', 'filename', 'img_height', 'img_width', 'brand', 'cname', 'ename', 'spec', 'code', 'price',
+                      'note']
         elif event_type == 'announcement':
-            fields = ['url', 'filename', 'title', 'content']
+            fields = ['url', 'filename', 'img_height', 'img_width', 'title', 'content']
         else:
             fields = []
         return fields
