@@ -269,7 +269,11 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                 for item in allEventItems:
                     item_published_data = dict()
                     for prop in costco_models.Item.get_published_fields(eventEntity.type):
-                        item_published_data[prop] = item.data[prop]
+                        try:
+                            item_published_data[prop] = item.data[prop]
+                        except KeyError:
+                            logging.warning('(Old) item data without field: %s. Remove it?' % prop)
+                            item_published_data[prop] = ''
                     event_data['items'].append(item_published_data)
 
                 publishedEventEntity = costco_models.PublishedEvent(id=str(intEventVer))
