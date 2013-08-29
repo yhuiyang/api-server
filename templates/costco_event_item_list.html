@@ -50,17 +50,17 @@
             </div>
             {% if event.type == 'coupon' or event.type == 'preview' %}
                 {{ macros.input_field("brand", "Brand", tooltip="Item brand name") }}
-                {{ macros.input_field("cname", "Chinese name", tooltip="Item Chinese name") }}
-                {{ macros.input_field("ename", "English name", tooltip="Item English name") }}
-                {{ macros.input_field("spec", "Spec", tooltip="Item spec or model name") }}
-                {{ macros.input_field("code", "Costco Code", tooltip="Costco item code") }}
+                {{ macros.textarea_field("cname", "Chinese name", tooltip="Item Chinese name") }}
+                {{ macros.textarea_field("ename", "English name", tooltip="Item English name") }}
+                {{ macros.textarea_field("spec", "Spec", tooltip="Item spec or model name") }}
+                {{ macros.textarea_field("code", "Costco Code", tooltip="Costco item code") }}
             {% if event.type == 'coupon' %}
                 {{ macros.input_field("discount", "Discount", tooltip="Item discount in this events offers") }}
             {% endif %}
                 {{ macros.input_field("price", "Original price", tooltip="Item original price") }}
-                {{ macros.input_field("note", "Extra note", tooltip="Item extra note") }}
+                {{ macros.textarea_field("note", "Extra note", tooltip="Item extra note") }}
             {% elif event.type == 'exhibition' %}
-                {{ macros.input_field("title", "Title", tooltip="Exhibition title", class="input-xlarge") }}
+                {{ macros.textarea_field("title", "Title", tooltip="Exhibition title", class="input-xlarge") }}
                 {{ macros.input_field("start", "Start date", type="date", tooltip="Exhibition start date") }}
                 {{ macros.input_field("end", "End date", type="date", tooltip="Exhibition end date") }}
             <div class="control-group">
@@ -80,7 +80,7 @@
                 </div>
             </div>
             {% elif event.type == 'announcement' %}
-                {{ macros.input_field("title", "Title", class="input-xlarge", tooltip="Announcement title") }}
+                {{ macros.textarea_field("title", "Title", class="input-xlarge", tooltip="Announcement title") }}
                 {{ macros.textarea_field("content", "Content", class="input-xxlarge", rows="5", tooltip="Announcement detailed content") }}
             {% endif %}
             <div class="form-action">
@@ -205,23 +205,23 @@
             <input type="hidden" id="idEditedItemKeyUrlsafe" name="urlsafe" value="">
             {% if event.type == 'coupon' %}
                 {{ macros.input_field("brand", "Brand", id="idCouponBrand") }}
-                {{ macros.input_field("cname", "CName", id="idCouponCName") }}
-                {{ macros.input_field("ename", "EName", id="idCouponEName") }}
-                {{ macros.input_field("spec", "Spec", id="idCouponSpec") }}
-                {{ macros.input_field("code", "Code", id="idCouponCode") }}
+                {{ macros.textarea_field("cname", "CName", id="idCouponCName") }}
+                {{ macros.textarea_field("ename", "EName", id="idCouponEName") }}
+                {{ macros.textarea_field("spec", "Spec", id="idCouponSpec") }}
+                {{ macros.textarea_field("code", "Code", id="idCouponCode") }}
                 {{ macros.input_field("discount", "Discount", id="idCouponDiscount") }}
                 {{ macros.input_field("price", "Price", id="idCouponPrice") }}
-                {{ macros.input_field("note", "Note", id="idCouponNote") }}
+                {{ macros.textarea_field("note", "Note", id="idCouponNote") }}
             {% elif event.type == 'preview' %}
                 {{ macros.input_field("brand", "Brand", id="idPreviewBrand") }}
-                {{ macros.input_field("cname", "CName", id="idPreviewCName") }}
-                {{ macros.input_field("ename", "EName", id="idPreviewEName") }}
-                {{ macros.input_field("spec", "Spec", id="idPreviewSpec") }}
-                {{ macros.input_field("code", "Code", id="idPreviewCode") }}
+                {{ macros.textarea_field("cname", "CName", id="idPreviewCName") }}
+                {{ macros.textarea_field("ename", "EName", id="idPreviewEName") }}
+                {{ macros.textarea_field("spec", "Spec", id="idPreviewSpec") }}
+                {{ macros.textarea_field("code", "Code", id="idPreviewCode") }}
                 {{ macros.input_field("price", "Price", id="idPreviewPrice") }}
-                {{ macros.input_field("note", "Note", id="idPreviewNote") }}
+                {{ macros.textarea_field("note", "Note", id="idPreviewNote") }}
             {% elif event.type == 'exhibition' %}
-                {{ macros.input_field("title", "Title", id="idExhibitionTitle") }}
+                {{ macros.textarea_field("title", "Title", id="idExhibitionTitle") }}
                 {{ macros.input_field("start", "Start", type="date", id="idExhibitionStart") }}
                 {{ macros.input_field("end", "End", type="date", id="idExhibitionEnd") }}
             <div class="control-group">
@@ -241,7 +241,7 @@
                 </div>
             </div>
             {% elif event.type == 'announcement' %}
-                {{ macros.input_field("title", "Title", id="idAnnouncementTitle") }}
+                {{ macros.textarea_field("title", "Title", id="idAnnouncementTitle") }}
                 {{ macros.textarea_field("content", "Content", id="idAnnouncementContent", class="input-block-level", rows="5") }}
             {% endif %}
         </div>
