@@ -130,7 +130,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
     def get(self, event_id):
 
         # find all items belongs to this event
-        allItems = costco_models.Item.get_event_items(event_id)
+        allItems = costco_models.EventItem.get_event_items(event_id)
 
         # populate item_list for later rendering
         eventKey = ndb.Key(costco_models.Event, str((int(event_id) / 100) * 100))
@@ -138,7 +138,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         item_list = []
         for item in allItems:
             item_prop = {}
-            for n in costco_models.Item.get_web_fields(eventEntity.type):
+            for n in costco_models.EventItem.get_web_fields(eventEntity.type):
                 if n == 'urlsafe':
                     item_prop[n] = item.key.urlsafe()
                 else:
@@ -165,7 +165,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         data_dict = dict()
         # collect item image meta data
         # blobstore.BlobInfo.properties() = set(['creation', 'content_type', 'md5_hash', 'size', 'fielname'])
-        for prop in costco_models.Item.get_blob_fields():
+        for prop in costco_models.EventItem.get_blob_fields():
             if prop == 'url':
                 data_dict[prop] = images.get_serving_url(blob_key)
             elif prop == 'blob_creation':
@@ -193,7 +193,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         int_event_id = int(event_id)
         event_key = str((int_event_id / 100) * 100)
         eventEntity = costco_models.Event.get_by_id(event_key)
-        for prop in costco_models.Item.get_user_fields(eventEntity.type):
+        for prop in costco_models.EventItem.get_user_fields(eventEntity.type):
             if prop == 'locations':
                 data_dict[prop] = self.request.get_all(prop)
             else:
@@ -206,7 +206,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         eventEntity.modified = True
 
         # create new item in datastore
-        item = costco_models.Item(parent=eventEntity.key)
+        item = costco_models.EventItem(parent=eventEntity.key)
         item.data = data_dict
 
         # update datastore
@@ -273,10 +273,10 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                 event_data['end'] = eventEntity.end.isoformat()
                 event_data['type'] = eventEntity.type
                 event_data['items'] = []
-                allEventItems = costco_models.Item.get_event_items(event_id)
+                allEventItems = costco_models.EventItem.get_event_items(event_id)
                 for item in allEventItems:
                     item_published_data = dict()
-                    for prop in costco_models.Item.get_published_fields(eventEntity.type):
+                    for prop in costco_models.EventItem.get_published_fields(eventEntity.type):
                         try:
                             item_published_data[prop] = item.data[prop]
                         except KeyError:
@@ -334,7 +334,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
             self.abort(404)
 
         item_data = itemEntity.data
-        for prop in costco_models.Item.get_user_fields(eventEntity.type):
+        for prop in costco_models.EventItem.get_user_fields(eventEntity.type):
             old = item_data[prop]
             if prop in ['locations']:
                 new = self.request.get_all('locations[]')

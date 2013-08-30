@@ -51,7 +51,7 @@ class Event(ndb.Model):  # one major version, one entity, id=major version
                               indexed=False)
 
 
-class Item(ndb.Model):
+class EventItem(ndb.Model):
     data = ndb.JsonProperty(required=True)
 
     @classmethod
@@ -64,7 +64,7 @@ class Item(ndb.Model):
         else:
             return None
 
-        return Item.query(ancestor=ndb.Key(Event, str(intEventMajorVer)))
+        return EventItem.query(ancestor=ndb.Key(Event, str(intEventMajorVer)))
 
     @classmethod
     def get_user_fields(cls, event_type='coupon'):
