@@ -2,12 +2,65 @@
 
 {% block mediaCSS %}
 <style type="text/css">
-body {
-    padding-top: 80px;
+@media (min-width: 981px) {
+    body {
+        padding-top: 60px;
+    }
 }
+.dashboard-container ul {
+    list-style: none;
+    display: block;
+    /*border: 1px dashed #000;*/
+}
+.dashboard-container ul li {
+    display: inline-block;
+    border: 1px dashed #ccc;
+    width: auto;
+    min-width: 250px;
+    height: auto;
+    min-height: 135px;
+    background-color: #f5f5f5;
+    margin: 10px;
+    padding: 10px;
+}
+.dashboard-container .header {
+    text-align: center;
+}
+.dashboard-container .description {
+    text-align: left;
+    padding-top: 10px;
+}
+
 </style>
 {% endblock mediaCSS %}
 
 {% block content %}
-        This is dashboard.
+<div class="dashboard-container">
+    <ul>
+        <li>
+            <div class="header">
+                <a href="/costco/events">Costco Events Offers</a>
+            </div>
+            <div class="description">
+                Create and manage costco events offers.
+            </div>
+        </li>
+        <li>
+            <div class="header">
+                <a href="/costco/items">Costco Item Database</a>
+            </div>
+            <div class="description">
+                Manage costco item database.
+            </div>
+        </li>
+        <li>
+            <div class="header">
+                <a href="/costco/stores">Costco Store Info</a>
+            </div>
+            <div class="description">
+                Manage costco store information.
+            </div>
+        </li>
+    </ul>
+</div>
 {% endblock content %}
