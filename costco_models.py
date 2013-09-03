@@ -24,6 +24,9 @@ from google.appengine.ext import ndb
 # local imports
 
 
+###########################################################################
+# Events Offers
+###########################################################################
 COSTCO_EVENT_MANAGER = 'CostcoEventManager'
 
 
@@ -128,3 +131,26 @@ class EventItem(ndb.Model):
         else:
             fields = []
         return fields
+
+
+###########################################################################
+# Stores
+###########################################################################
+class BusinessHour(ndb.Model):
+    dayOfWeekBegin = ndb.IntegerProperty(required=True, indexed=False)
+    dayOfWeekEnd = ndb.IntegerProperty(required=True, indexed=False)
+    hourBegin = ndb.TimeProperty(required=True, indexed=False)
+    hourEnd = ndb.TimeProperty(required=True, indexed=False)
+
+
+class Store(ndb.Model):
+    name = ndb.StringProperty(required=True, indexed=False)
+    address = ndb.StringProperty(required=True, indexed=False)
+    phone = ndb.StringProperty(required=True, indexed=False)
+    businessHour = ndb.LocalStructuredProperty(BusinessHour, repeated=True, indexed=False)
+    geo = ndb.GeoPtProperty(required=True, indexed=False)
+    services = ndb.StringProperty(indexed=False, repeated=True)
+
+
+class PublishedStores(ndb.Model):
+    stores = ndb.JsonProperty(required=True, indexed=False)

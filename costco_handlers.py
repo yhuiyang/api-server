@@ -20,6 +20,7 @@
 import logging
 import json
 from datetime import date
+from datetime import time
 
 # GAE imports
 import webapp2
@@ -37,6 +38,9 @@ import costco_models as models
 from base_handlers import BaseHandler
 
 
+###########################################################################
+# Events Offers
+###########################################################################
 class CostcoEventCRUD(BaseHandler):
 
     def getAllEventMajorVersionList(self):
@@ -507,6 +511,145 @@ def appendCachedCostcoAllEventMajorVersions(intMajorVersion):
     list.append(intMajorVersion)
     setCachedCostcoAllEventMajorVersions(list)
 
+
+###########################################################################
+# Stores
+###########################################################################
+class CostcoStoreCRUD(BaseHandler):
+
+    @admin_required
+    def get(self):
+
+        # Check if any query string exists, if exist, simple return json response instead of html page.
+        # The name GET is a bit misleading, but has historical reasons: request.GET is not only available when
+        # the HTTP method is GET. It is available for any request with query strings in the URI, for any HTTP
+        # method: GET, POST, PUT etc.
+        if len(self.request.GET) > 0:
+
+            resp = {}
+
+            store_id = self.request.get('id')
+            if store_id:
+                storeEntity = models.Store.get_by_id(store_id)
+                if storeEntity:
+                    queryItem = self.request.get('q')
+                    if queryItem == 'name':
+                        resp['result'] = storeEntity.name
+                    elif queryItem == 'phone':
+                        resp['result'] = storeEntity.phone
+                    else:
+                        self.response.code = 404
+                        resp['error'] = 'Unsupported'
+                else:
+                    self.response.code = 404
+                    resp['error'] = 'Store id is incorrect.'
+            else:
+                self.response.code = 400
+                resp['error'] = 'Store id is not assigned.'
+
+            self.response.content_type = 'application/json'
+            self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
+
+            return
+
+        stores = []
+
+        allStoresInDS = models.Store.query()
+        for store_in_ds in allStoresInDS:
+            store = dict()
+            store['id'] = store_in_ds.key.id()
+            store['name'] = store_in_ds.name
+            store['address'] = store_in_ds.address
+            store['phone'] = store_in_ds.phone
+            store['business_hour'] = []
+            for bh in store_in_ds.businessHour:
+                bh_dict = dict()
+                bh_dict['day_of_week_begin'] = bh.dayOfWeekBegin
+                bh_dict['day_of_week_end'] = bh.dayOfWeekEnd
+                bh_dict['hour_of_day_begin'] = bh.hourBegin
+                bh_dict['hour_of_day_end'] = bh.hourEnd
+                store['business_hour'].append(bh_dict)
+            store['geo'] = store_in_ds.geo
+            store['services'] = []
+            for serv in store_in_ds.services:
+                store['services'].append(serv)
+
+            stores.append(store)
+
+        logging.debug(stores)
+
+        params = {
+            'app_name': 'Costco Stores',
+            'stores': stores,
+        }
+        self.render_response('costco_store_list.html', **params)
+
+    def post(self):
+
+        id = self.request.get('id')
+        storeEntity = models.Store(id=id)
+        storeEntity.name = self.request.get('name')
+        storeEntity.address = self.request.get('address').replace('\r', '')  # remove '\r' or replace '\r\n' with '\n'.
+        storeEntity.phone = self.request.get('phone')
+
+        list_day_begin = self.request.get_all('day_begin')
+        list_day_end = self.request.get_all('day_end')
+        list_hour_begin = self.request.get_all('hour_begin')
+        list_hour_end = self.request.get_all('hour_end')
+        if len(list_day_begin) != len(list_day_end) \
+                or len(list_day_begin) != len(list_hour_begin) \
+                or len(list_day_begin) != len(list_hour_end):
+            logging.warning('Incorrect business hour setting.')
+            self.response.status = '400'
+            return
+        for idx in range(len(list_day_begin)):
+            hb, mb = list_hour_begin[idx].split(':')
+            he, me = list_hour_end[idx].split(':')
+            storeEntity.businessHour.append(models.BusinessHour(dayOfWeekBegin=int(list_day_begin[idx]),
+                                            dayOfWeekEnd=int(list_day_end[idx]),
+                                            hourBegin=time(int(hb), int(mb)),
+                                            hourEnd=time(int(he), int(me))))
+
+        storeEntity.services = self.request.get('services').splitlines()
+        lat = self.request.get('lat')
+        lng = self.request.get('lng')
+        storeEntity.geo = ndb.GeoPt(float(lat), float(lng))
+
+        storeEntity.put()
+
+        self.redirect_to('costco-store-crud', _code=303)
+
+    def put(self):
+
+        self.response.code = 200
+
+        store_id = self.request.get('id')
+        if store_id:
+            storeEntity = models.Store.get_by_id(store_id)
+            if storeEntity:
+                setValue = self.request.get('v')
+                if not setValue:
+                    self.response.code = 400
+                    return
+                setItem = self.request.get('n')
+                if setItem == 'name':
+                    storeEntity.name = setValue
+                elif setItem == 'phone':
+                    storeEntity.phone = setValue
+                else:
+                    self.response.code = 400
+            else:
+                self.response.code = 404
+        else:
+            self.response.code = 400
+
+        if self.response.code == 200:
+            storeEntity.put()
+
+
+###########################################################################
+# Routes
+###########################################################################
 routes = [
     RedirectRoute(r'/costco/event/<event_id:[1-9]\d*>', handler=CostcoEventItemCRUD,
                   name='costco-event-item-crud', strict_slash=True),
@@ -516,4 +659,5 @@ routes = [
     webapp2.Route(r'/api/v1/costco/whatsnew', handler=ApiV1CostcoWhatsNew),
     webapp2.Route(r'/api/v1/costco/events', handler=ApiV1CostcoEvents),
     webapp2.Route(r'/api/v1/costco/event/<event_id:[1-9]\d*>', ApiV1CostcoEventDetail),
+    RedirectRoute(r'/costco/stores', handler=CostcoStoreCRUD, name='costco-store-crud', strict_slash=True)
 ]

@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% import "macros.html" as macros %}
+
+{% block mediaCSS %}
+<style type="text/css">
+@media (min-width: 981px) {
+    body {
+        padding-top: 60px;
+    }
+}
+
+#idDivStoreForm>form {
+    background-color: #cccccc;
+    padding: 30px;
+    -moz-border-radius: 15px;
+    border-radius: 15px;
+}
+
+/* The following rules control table cell edit and normal mode */
+[editmode="false"] div.clsDivEditMode {
+    display: none;
+}
+
+[editmode="false"] div.clsDivNormalMode {
+    display: block;
+}
+
+[editmode="true"] div.clsDivEditMode {
+    display: block;
+}
+
+[editmode="true"] div.clsDivNormalMode {
+    display: none;
+}
+
+div.clsDivEditMode div.btn-group {
+    display: none;
+}
+
+div.clsDivNormalMode button {
+    display: none;
+}
+
+#map-canvas {
+    height: 350px;
+    /*width: 100%;*/
+}
+</style>
+{% endblock mediaCSS %}
+
+{# form input field with kwarg support #}
+{% macro input(name, label, type='text', class='input-block-level', simple='false') -%}
+    {% if simple == 'false' %}<label>{{ label }}</label>{% endif %}
+    <input type="{{ type }}" name="{{ name }}" class="{{ class }}"{% if kwargs %}{% for k, v in kwargs.items() %} {{ k }}="{{ v }}"{% endfor %}{% endif %}>
+{%- endmacro %}
+
+{# form textarea field with kwarg support #}
+{% macro textarea(name, label, rows='2', class='input-block-level') -%}
+    <label>{{ label }}</label>
+    <textarea name="{{ name }}" class="{{ class }}" rows="{{ rows }}"{% if kwargs %}{% for k, v in kwargs.items() %} {{ k }}="{{ v }}"{% endfor %}{% endif %}></textarea>
+{%- endmacro %}
+
+{# form select field for day of the week. #}
+{% macro select(name, label, class='input-block-level') -%}
+    <label>{{ label }}</label>
+    <select name="{{ name }}" class="{{ class }}">
+        <option value="0">日</option>
+        <option value="1">一</option>
+        <option value="2">二</option>
+        <option value="3">三</option>
+        <option value="4">四</option>
+        <option value="5">五</option>
+        <option value="6">六</option>
+    </select>
+    {% if kwargs %}{% endif %} {# if remove left kwargs, it shows error, don't why, so keep it. #}
+{%- endmacro %}
+
+{# form field for business hour #}
+{% macro business_hour() -%}
+    <div class="row-fluid">
+        <div class="span2">
+            <label>Business Hours</label>
+        </div>
+        <div class="span2">
+            {% call select('day_begin', 'From day of week') %}{% endcall %}
+        </div>
+        <div class="span2">
+            {% call select('day_end', 'To day of week') %}{% endcall %}
+        </div>
+        <div class="span2">
+            {% call input('hour_begin', 'From time', type='time') %}{% endcall %}
+        </div>
+        <div class="span2">
+            {% call input('hour_end', 'To time', type='time') %}{% endcall %}
+        </div>
+        <div class="span1">
+            <button type="button" class="close pull-left">&times;</button>
+        </div>
+    </div>
+{%- endmacro %}
+
+{# convert day of the week from number to string #}
+{% macro to_day_of_week_string(number) -%}
+    {% if number == 0 %}日{% elif number == 1 %}一{% elif number == 2 %}二{% elif number == 3 %}三{% elif number == 4 %}四{% elif number == 5 %}五{% elif number == 6 %}六{% else %}X{% endif %}
+{%- endmacro %}
+
+{# store table cell edit and submit button #}
+{% macro input_field_edit_btn(q='') -%}
+<button class="btn btn-mini clsBtnRequestEditInput" q="{{ q }}"><i class="icon-edit"></i></button>
+{%- endmacro %}
+{% macro input_field_submit_btn(n='') -%}
+    <div class="btn-group">
+        <button class="btn btn-mini clsBtnSubmitInput" n="{{ n }}"><i class="icon-ok"></i></button>
+        <button class="btn btn-mini clsBtnQuitEditInput"><i class="icon-remove"></i></button>
+    </div>
+{%- endmacro %}
+
+{% block content %}
+<div id="idDivStoreForm" class="collapse">
+    <form class="form-horizontal" action="/costco/stores" method="post">
+        <fieldset>
+            <legend>Create New Store</legend>
+            <div class="row-fluid">
+                <div class="span7">
+                    {{ input('id', 'Store id', placeholder='Store id, can\'t be changed after created.') }}
+                </div>
+                <div class="span5">
+                    {{ input('name', 'Name', placeholder='Store Chinese name') }}
+                </div>
+            </div>
+            <div class="row-fluid">
+                <div class="span9">
+                    {{ textarea('address', 'Address', placeholder='Address') }}
+                </div>
+                <div class="span3">
+                    {{ input('phone', 'Phone', placeholder='886-3-456-7890') }}
+                </div>
+            </div>
+            <div class="row-fluid">
+                <button type="button" class="btn btn-mini btn-inverse btn-white" id="idBtnAddBusinessHourRow">add</button>
+            </div>
+            <div class="row-fluid" id="idDivBussinessHourContainer">
+                {{ business_hour() }}
+            </div>
+            <div class="row-fluid">
+                <div class="span6">
+                    {{ textarea('services', 'Services', rows='10') }}
+                </div>
+                <div class="span6">
+                    <div class="row-fluid">
+                        {{ input('lat', 'Geo lat', placeholder='24.56, between -90 and 90.', type='number', min='-90', max='90', step='any') }}
+                        {{ input('lng', 'Geo lng', placeholder='123.45, between -180 and 180.', type='number', max='180', min='-180', step='any') }}
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="row-fluid">
+                <button class="input btn btn-primary" value="submit">Create</button>
+            </div>
+        </fieldset>
+    </form>
+</div>
+
+<h1>
+    Taiwan Costco Store List
+    <button type="button" class="btn btn-info pull-right" data-toggle="collapse" data-target="#idDivStoreForm">
+        <i id="idIconToggleForm" class="icon-chevron-down icon-white"></i><span id="idTextToggleForm">Show form</span>
+    </button>
+</h1>
+
+{% if stores %}
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Address</th>
+            <th>Phone</th>
+            <th>Business Hour</th>
+            <th>Services</th>
+            <th>Geo</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for store in stores %}
+        <tr id="{{ store.id }}">
+            <td>{{ loop.index }}</td>
+            <td editmode="false"><div class="clsDivEditMode">{{ input('name', simple='true') }}{{ input_field_submit_btn(n='name') }}</div><div class="clsDivNormalMode"><span>{{ store.name }}</span>{{ input_field_edit_btn(q='name') }}</div></td>
+            <td style="white-space: pre">{{ store.address }}</td>
+            <td editmode="false"><div class="clsDivEditMode">{{ input('phone', simple='true') }}{{ input_field_submit_btn(n='phone') }}</div><div class="clsDivNormalMode"><span>{{ store.phone }}</span>{{ input_field_edit_btn(q='phone') }}</div></td>
+            <td>{% for bh in store.business_hour -%}
+                    {{ to_day_of_week_string(bh['day_of_week_begin']) }} ~ {{ to_day_of_week_string(bh['day_of_week_end']) }} {{ bh['hour_of_day_begin'] }} ~ {{ bh['hour_of_day_end'] }}<br>
+                {%- endfor %}
+            </td>
+            <td>{% for service in store.services -%}
+                    {{ service }}<br>
+                {%- endfor %}
+            </td>
+            <td>{{ store.geo }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+<div id="map-canvas" />
+
+{% endblock content %}
+
+{% block mediaJS %}
+<script type="text/javascript"
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD2wYBzKkrqNYRkCEbT8MitMzbCF4m0vBU&sensor=false&v=3"></script>
+
+<script type="text/javascript">
+$(document).ready(function() {
+    var mapOptions = {
+        center: new google.maps.LatLng(0, 0),
+        zoom: 5,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+});
+
+/* store form show/hide stuff */
+$('#idDivStoreForm').on('shown', function() {
+    $('#idTextToggleForm').text('Hide form');
+    $('#idIconToggleForm').removeClass('icon-chevron-down').addClass('icon-chevron-up')
+});
+$('#idDivStoreForm').on('hidden', function() {
+    $('#idTextToggleForm').text('Show form');
+    $('#idIconToggleForm').removeClass('icon-chevron-up').addClass('icon-chevron-down')
+});
+
+/* business hour row add and remove */
+var business_hour_count = 1;
+$('form:first').on('click', 'button.close', function(){
+    console.log('Remove bussiness hour row');
+    var me = $(this).parent('div').parent('div');
+    if (business_hour_count > 1) {
+        $('#idDivBussinessHourContainer').find(me).remove();
+        business_hour_count--;
+    }
+});
+var business_hour_content = $('#idDivBussinessHourContainer').html();
+$('#idBtnAddBusinessHourRow').on('click', function(){
+    console.log('Add new business hour row');
+    /* append seems doesn't like newline char in his parameter, so use a global var to hold the content to be added.
+     * I have tried {{ business_hour() | replace('\n', '\\\n') | replace('\r', '') }} (see it expands in this comment),
+     * there still is error about quote symbol */
+    $('#idDivBussinessHourContainer').append(business_hour_content);
+    business_hour_count++;
+});
+
+/* store table cell edit */
+$('.clsDivNormalMode').on('mouseover', function(){
+    $(this).children('button').show();
+});
+$('.clsDivNormalMode').on('mouseout', function(){
+    $(this).children('button').hide();
+});
+$('.clsDivEditMode').on('mouseover', function(){
+    $(this).children('div.btn-group').show();
+});
+$('.clsDivEditMode').on('mouseout', function(){
+    $(this).children('div.btn-group').hide();
+});
+$('.clsBtnRequestEditInput').on('click', function(){
+    var storeId = $(this).closest('tr').attr('id');
+    var qItem = $(this).attr('q');
+    var td = $(this).closest('td');
+    var input = td.children('div.clsDivEditMode').children('input');
+
+    $.ajax({
+        url: '/costco/stores',
+        type: 'GET',
+        data: {
+            id: storeId,
+            q: qItem
+        }
+    }).done(function(data){
+        /* update td to edit mode */
+        td.attr('editmode', 'true');
+        /* set query result to input field */
+        input.val(data['result']);
+    }).fail(function(data){
+        console.log(data['error']);
+    });
+});
+$('.clsBtnQuitEditInput').on('click', function(){
+    /* quit edit mode */
+    $(this).closest('td').attr('editmode', 'false');
+});
+$('.clsBtnSubmitInput').on('click', function(){
+    var storeId = $(this).closest('tr').attr('id');
+    var name = $(this).attr('n');
+    var td = $(this).closest('td');
+    var value = td.children('div.clsDivEditMode').children('input').val();
+
+    $.ajax({
+        url: '/costco/stores',
+        type: 'PUT',
+        data: {
+            id: storeId,
+            n: name,
+            v: value
+        }
+    }).done(function(){
+        td.children('div.clsDivNormalMode').children('span').html(value); /* use text(value) will add extra " */
+        td.attr('editmode', 'false');
+    }).fail(function(){
+        console.log('Fail to update ' + name + ' to ' + value);
+        td.attr('editmode', 'false');
+    });
+});
+</script>
+{% endblock mediaJS %}
