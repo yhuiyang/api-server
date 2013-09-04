@@ -537,6 +537,8 @@ class CostcoStoreCRUD(BaseHandler):
                         resp['result'] = storeEntity.name
                     elif queryItem == 'phone':
                         resp['result'] = storeEntity.phone
+                    elif queryItem == 'address':
+                        resp['result'] = storeEntity.address
                     else:
                         self.response.status_int = 404
                         resp['error'] = 'Unsupported'
@@ -636,6 +638,8 @@ class CostcoStoreCRUD(BaseHandler):
                     storeEntity.name = setValue
                 elif setItem == 'phone':
                     storeEntity.phone = setValue
+                elif setItem == 'address':
+                    storeEntity.address = setValue.replace('\r', '')
                 else:
                     self.response.status_int = 400
             else:

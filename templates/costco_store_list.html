@@ -55,8 +55,8 @@ div.clsDivNormalMode button {
 {%- endmacro %}
 
 {# form textarea field with kwarg support #}
-{% macro textarea(name, label, rows='2', class='input-block-level') -%}
-    <label>{{ label }}</label>
+{% macro textarea(name, label, rows='2', class='input-block-level', simple='false') -%}
+    {% if simple == 'false' %}<label>{{ label }}</label>{% endif %}
     <textarea name="{{ name }}" class="{{ class }}" rows="{{ rows }}"{% if kwargs %}{% for k, v in kwargs.items() %} {{ k }}="{{ v }}"{% endfor %}{% endif %}></textarea>
 {%- endmacro %}
 
@@ -112,6 +112,15 @@ div.clsDivNormalMode button {
     <div class="btn-group">
         <button class="btn btn-mini clsBtnSubmitInput" n="{{ n }}"><i class="icon-ok"></i></button>
         <button class="btn btn-mini clsBtnQuitEditInput"><i class="icon-remove"></i></button>
+    </div>
+{%- endmacro %}
+{% macro textarea_field_edit_btn(q='') -%}
+<button class="btn btn-mini clsBtnRequestEditTextarea" q="{{ q }}"><i class="icon-edit"></i></button>
+{%- endmacro %}
+{% macro textarea_field_submit_btn(n='') -%}
+    <div class="btn-group">
+        <button class="btn btn-mini clsBtnSubmitTextarea" n="{{ n }}"><i class="icon-ok"></i></button>
+        <button class="btn btn-mini clsBtnQuitEditTextarea"><i class="icon-remove"></i></button>
     </div>
 {%- endmacro %}
 
@@ -186,7 +195,7 @@ div.clsDivNormalMode button {
         <tr id="{{ store.id }}">
             <td>{{ loop.index }}</td>
             <td editmode="false"><div class="clsDivEditMode">{{ input('name', simple='true') }}{{ input_field_submit_btn(n='name') }}</div><div class="clsDivNormalMode"><span>{{ store.name }}</span>{{ input_field_edit_btn(q='name') }}</div></td>
-            <td style="white-space: pre">{{ store.address }}</td>
+            <td editmode="false"><div class="clsDivEditMode">{{ textarea('address', simple='true') }}{{ textarea_field_submit_btn(n='address') }}</div><div class="clsDivNormalMode"><span style='white-space: pre;'>{{ store.address }}</span>{{ textarea_field_edit_btn(q='address') }}</div></td>
             <td editmode="false"><div class="clsDivEditMode">{{ input('phone', simple='true') }}{{ input_field_submit_btn(n='phone') }}</div><div class="clsDivNormalMode"><span>{{ store.phone }}</span>{{ input_field_edit_btn(q='phone') }}</div></td>
             <td>{% for bh in store.business_hour -%}
                     {{ to_day_of_week_string(bh['day_of_week_begin']) }} ~ {{ to_day_of_week_string(bh['day_of_week_end']) }} {{ bh['hour_of_day_begin'] }} ~ {{ bh['hour_of_day_end'] }}<br>
@@ -294,6 +303,52 @@ $('.clsBtnSubmitInput').on('click', function(){
     var name = $(this).attr('n');
     var td = $(this).closest('td');
     var value = td.children('div.clsDivEditMode').children('input').val();
+
+    $.ajax({
+        url: '/costco/stores',
+        type: 'PUT',
+        data: {
+            id: storeId,
+            n: name,
+            v: value
+        }
+    }).done(function(){
+        td.children('div.clsDivNormalMode').children('span').html(value); /* use text(value) will add extra " */
+        td.attr('editmode', 'false');
+    }).fail(function(){
+        console.log('Fail to update ' + name + ' to ' + value);
+        td.attr('editmode', 'false');
+    });
+});
+$('.clsBtnRequestEditTextarea').on('click', function(){
+    var storeId = $(this).closest('tr').attr('id');
+    var qItem = $(this).attr('q');
+    var td = $(this).closest('td');
+    var textarea = td.children('div.clsDivEditMode').children('textarea');
+
+    $.ajax({
+        url: '/costco/stores',
+        type: 'GET',
+        data: {
+            id: storeId,
+            q: qItem
+        }
+    }).done(function(data){
+        td.attr('editmode', 'true');
+        textarea.val(data['result']);
+    }).fail(function(data){
+        console.log(data['error']);
+    });
+});
+$('.clsBtnQuitEditTextarea').on('click', function(){
+    /* quit edit mode */
+    $(this).closest('td').attr('editmode', 'false');
+});
+$('.clsBtnSubmitTextarea').on('click', function(){
+    var storeId = $(this).closest('tr').attr('id');
+    var name = $(this).attr('n');
+    var td = $(this).closest('td');
+    var value = td.children('div.clsDivEditMode').children('textarea').val();
 
     $.ajax({
         url: '/costco/stores',
