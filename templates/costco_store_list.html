@@ -41,6 +41,10 @@ div.clsDivNormalMode button {
     display: none;
 }
 
+td.clsCellStoreIndex button {
+    display: none;
+}
+
 #map-canvas {
     height: 350px;
     /*width: 100%;*/
@@ -193,7 +197,7 @@ div.clsDivNormalMode button {
     <tbody>
         {% for store in stores %}
         <tr id="{{ store.id }}">
-            <td>{{ loop.index }}</td>
+            <td class="clsCellStoreIndex">{{ loop.index }}<button class="btn btn-mini clsBtnDeleteStore"><i class="icon-trash"></i></button></td>
             <td editmode="false"><div class="clsDivEditMode">{{ input('name', simple='true') }}{{ input_field_submit_btn(n='name') }}</div><div class="clsDivNormalMode"><span>{{ store.name }}</span>{{ input_field_edit_btn(q='name') }}</div></td>
             <td editmode="false"><div class="clsDivEditMode">{{ textarea('address', simple='true') }}{{ textarea_field_submit_btn(n='address') }}</div><div class="clsDivNormalMode"><span style='white-space: pre;'>{{ store.address }}</span>{{ textarea_field_edit_btn(q='address') }}</div></td>
             <td editmode="false"><div class="clsDivEditMode">{{ input('phone', simple='true') }}{{ input_field_submit_btn(n='phone') }}</div><div class="clsDivNormalMode"><span>{{ store.phone }}</span>{{ input_field_edit_btn(q='phone') }}</div></td>
@@ -362,6 +366,31 @@ $('.clsBtnSubmitTextarea').on('click', function(){
         console.log('Fail to update ' + name + ' to ' + value);
         td.attr('editmode', 'false');
     });
+});
+
+/* store delete */
+$('.clsCellStoreIndex').on('mouseover', function(){
+    $(this).children('button').show();
+});
+$('.clsCellStoreIndex').on('mouseout', function(){
+    $(this).children('button').hide();
+});
+$('.clsBtnDeleteStore').on('click', function(){
+    var tr = $(this).closest('tr');
+    var storeId = tr.attr('id');
+    var name = tr.children('td').eq(1).children('div.clsDivNormalMode').children('span').text();
+
+    var confirm = window.confirm('Are you sure you want to delete ' + name);
+    if (confirm == true) {
+        $.ajax({
+            url: '/costco/stores?id=' + storeId,
+            type: 'DELETE'
+        }).done(function(){
+            window.location.reload();
+        }).fail(function(e){
+            console.log(e);
+        });
+    }
 });
 </script>
 {% endblock mediaJS %}

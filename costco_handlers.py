@@ -652,6 +652,14 @@ class CostcoStoreCRUD(BaseHandler):
         if self.response.status_int == 200:
             storeEntity.put()
 
+    def delete(self):
+
+        store_id = self.request.get('id')
+        if store_id:
+            storeEntity = models.Store.get_by_id(store_id)
+            if storeEntity:
+                storeEntity.key.delete_async()
+
 
 ###########################################################################
 # Routes
