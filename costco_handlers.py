@@ -538,13 +538,13 @@ class CostcoStoreCRUD(BaseHandler):
                     elif queryItem == 'phone':
                         resp['result'] = storeEntity.phone
                     else:
-                        self.response.code = 404
+                        self.response.status_int = 404
                         resp['error'] = 'Unsupported'
                 else:
-                    self.response.code = 404
+                    self.response.status_int = 404
                     resp['error'] = 'Store id is incorrect.'
             else:
-                self.response.code = 400
+                self.response.status_int = 400
                 resp['error'] = 'Store id is not assigned.'
 
             self.response.content_type = 'application/json'
@@ -600,7 +600,7 @@ class CostcoStoreCRUD(BaseHandler):
                 or len(list_day_begin) != len(list_hour_begin) \
                 or len(list_day_begin) != len(list_hour_end):
             logging.warning('Incorrect business hour setting.')
-            self.response.status = '400'
+            self.response.status_int = 400
             return
         for idx in range(len(list_day_begin)):
             hb, mb = list_hour_begin[idx].split(':')
@@ -621,7 +621,7 @@ class CostcoStoreCRUD(BaseHandler):
 
     def put(self):
 
-        self.response.code = 200
+        self.response.status_int = 200
 
         store_id = self.request.get('id')
         if store_id:
@@ -629,7 +629,7 @@ class CostcoStoreCRUD(BaseHandler):
             if storeEntity:
                 setValue = self.request.get('v')
                 if not setValue:
-                    self.response.code = 400
+                    self.response.status_int = 400
                     return
                 setItem = self.request.get('n')
                 if setItem == 'name':
@@ -637,13 +637,13 @@ class CostcoStoreCRUD(BaseHandler):
                 elif setItem == 'phone':
                     storeEntity.phone = setValue
                 else:
-                    self.response.code = 400
+                    self.response.status_int = 400
             else:
-                self.response.code = 404
+                self.response.status_int = 404
         else:
-            self.response.code = 400
+            self.response.status_int = 400
 
-        if self.response.code == 200:
+        if self.response.status_int == 200:
             storeEntity.put()
 
 
