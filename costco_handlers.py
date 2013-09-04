@@ -539,6 +539,8 @@ class CostcoStoreCRUD(BaseHandler):
                         resp['result'] = storeEntity.phone
                     elif queryItem == 'address':
                         resp['result'] = storeEntity.address
+                    elif queryItem == 'services':
+                        resp['result'] = storeEntity.services
                     else:
                         self.response.status_int = 404
                         resp['error'] = 'Unsupported'
@@ -572,9 +574,7 @@ class CostcoStoreCRUD(BaseHandler):
                 bh_dict['hour_of_day_end'] = bh.hourEnd
                 store['business_hour'].append(bh_dict)
             store['geo'] = store_in_ds.geo
-            store['services'] = []
-            for serv in store_in_ds.services:
-                store['services'].append(serv)
+            store['services'] = store_in_ds.services
 
             stores.append(store)
 
@@ -612,7 +612,7 @@ class CostcoStoreCRUD(BaseHandler):
                                             hourBegin=time(int(hb), int(mb)),
                                             hourEnd=time(int(he), int(me))))
 
-        storeEntity.services = self.request.get('services').splitlines()
+        storeEntity.services = self.request.get('services').replace('\r', '')
         lat = self.request.get('lat')
         lng = self.request.get('lng')
         storeEntity.geo = ndb.GeoPt(float(lat), float(lng))
@@ -640,6 +640,8 @@ class CostcoStoreCRUD(BaseHandler):
                     storeEntity.phone = setValue
                 elif setItem == 'address':
                     storeEntity.address = setValue.replace('\r', '')
+                elif setItem == 'services':
+                    storeEntity.services = setValue.replace('\r', '')
                 else:
                     self.response.status_int = 400
             else:

@@ -149,7 +149,7 @@ class Store(ndb.Model):
     phone = ndb.StringProperty(required=True, indexed=False)
     businessHour = ndb.LocalStructuredProperty(BusinessHour, repeated=True, indexed=False)
     geo = ndb.GeoPtProperty(required=True, indexed=False)
-    services = ndb.StringProperty(indexed=False, repeated=True)
+    services = ndb.StringProperty(required=True, indexed=False)
 
 
 class PublishedStores(ndb.Model):
