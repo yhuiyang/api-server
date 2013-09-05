@@ -221,13 +221,20 @@ td.clsCellStoreIndex button {
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD2wYBzKkrqNYRkCEbT8MitMzbCF4m0vBU&sensor=false&v=3"></script>
 
 <script type="text/javascript">
+
+var map;
+var marker;
+var marker_dragend_listener;
+
 $(document).ready(function() {
+
     var mapOptions = {
         center: new google.maps.LatLng(0, 0),
-        zoom: 5,
+        zoom: 8,
         mapTypeId: google.maps.MapTypeId.ROADMAP
     };
-    var map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    google.maps.visualRefresh = true;
+    map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
 });
 
 /* store form show/hide stuff */
@@ -291,6 +298,28 @@ $('.clsBtnRequestEditInput').on('click', function(){
         td.attr('editmode', 'true');
         /* set query result to input field */
         input.val(data['result']);
+
+        if (qItem == 'geo') {
+            if (map) {
+                /* clear old marker and drag listener */
+                if (marker_dragend_listener != null) {
+                    google.maps.event.removeListener(marker_dragend_listener);
+                }
+                if (marker != null) {
+                    marker.setMap(null);
+                }
+                var latlng = data['result'].split(',');
+                marker = new google.maps.Marker({
+                    map: map,
+                    position: new google.maps.LatLng(parseFloat(latlng[0]), parseFloat(latlng[1])),
+                    draggable: true
+                });
+                map.panTo(marker.getPosition());
+                marker_dragend_listener = google.maps.event.addListener(marker, 'dragend', function(mouseEvent){
+                    input.val(mouseEvent.latLng.toUrlValue());
+                });
+            }
+        }
     }).fail(function(data){
         console.log(data['error']);
     });
@@ -298,6 +327,14 @@ $('.clsBtnRequestEditInput').on('click', function(){
 $('.clsBtnQuitEditInput').on('click', function(){
     /* quit edit mode */
     $(this).closest('td').attr('editmode', 'false');
+
+    /* remove marker if need */
+    if (marker_dragend_listener != null) {
+        google.maps.event.removeListener(marker_dragend_listener);
+    }
+    if (marker != null) {
+        marker.setMap(null);
+    }
 });
 $('.clsBtnSubmitInput').on('click', function(){
     var storeId = $(this).closest('tr').attr('id');
@@ -319,6 +356,13 @@ $('.clsBtnSubmitInput').on('click', function(){
     }).fail(function(){
         console.log('Fail to update ' + name + ' to ' + value);
         td.attr('editmode', 'false');
+    }).always(function(){
+        if (marker_dragend_listener != null) {
+            google.maps.event.removeListener(marker_dragend_listener);
+        }
+        if (marker != null) {
+            marker.setMap(null);
+        }
     });
 });
 $('.clsBtnRequestEditTextarea').on('click', function(){
