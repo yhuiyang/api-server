@@ -206,7 +206,7 @@ td.clsCellStoreIndex button {
                 {%- endfor %}
             </td>
             <td editmode="false"><div class="clsDivEditMode">{{ textarea('services', simple='true', rows='10') }}{{ textarea_field_submit_btn(n='services') }}</div><div class="clsDivNormalMode"><span style='white-space: pre;'>{{ store.services }}</span>{{ textarea_field_edit_btn(q='services') }}</div></td>
-            <td>{{ store.geo }}</td>
+            <td editmode="false"><div class="clsDivEditMode">{{ input('geo', simple='true') }}{{ input_field_submit_btn(n='geo') }}</div><div class="clsDivNormalMode"><span>{{ store.geo }}</span>{{ input_field_edit_btn(q='geo') }}</div></td>
         </tr>
         {% endfor %}
     </tbody>

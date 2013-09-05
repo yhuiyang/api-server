@@ -541,6 +541,8 @@ class CostcoStoreCRUD(BaseHandler):
                         resp['result'] = storeEntity.address
                     elif queryItem == 'services':
                         resp['result'] = storeEntity.services
+                    elif queryItem == 'geo':
+                        resp['result'] = storeEntity.geo.__unicode__()
                     else:
                         self.response.status_int = 404
                         resp['error'] = 'Unsupported'
@@ -642,6 +644,8 @@ class CostcoStoreCRUD(BaseHandler):
                     storeEntity.address = setValue.replace('\r', '')
                 elif setItem == 'services':
                     storeEntity.services = setValue.replace('\r', '')
+                elif setItem == 'geo':
+                    storeEntity.geo = ndb.GeoPt(setValue)
                 else:
                     self.response.status_int = 400
             else:
