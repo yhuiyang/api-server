@@ -49,6 +49,18 @@ td.clsCellStoreIndex button {
     height: 350px;
     /*width: 100%;*/
 }
+
+.marker-label {
+    color: red;
+    background-color: white;
+    font-family: "Lucida Grande", "Arial", sans-serif;
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+    width: 40px;
+    border: 2px solid black;
+    white-space: nowrap;
+}
 </style>
 {% endblock mediaCSS %}
 
@@ -219,6 +231,8 @@ td.clsCellStoreIndex button {
 {% block mediaJS %}
 <script type="text/javascript"
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD2wYBzKkrqNYRkCEbT8MitMzbCF4m0vBU&sensor=false&v=3"></script>
+<script type="text/javascript"
+    src="http://google-maps-utility-library-v3.googlecode.com/svn/tags/markerwithlabel/1.1.9/src/markerwithlabel_packed.js"></script>
 
 <script type="text/javascript">
 
@@ -281,7 +295,8 @@ $('.clsDivEditMode').on('mouseout', function(){
     $(this).children('div.btn-group').hide();
 });
 $('.clsBtnRequestEditInput').on('click', function(){
-    var storeId = $(this).closest('tr').attr('id');
+    var tr = $(this).closest('tr');
+    var storeId = tr.attr('id');
     var qItem = $(this).attr('q');
     var td = $(this).closest('td');
     var input = td.children('div.clsDivEditMode').children('input');
@@ -309,10 +324,15 @@ $('.clsBtnRequestEditInput').on('click', function(){
                     marker.setMap(null);
                 }
                 var latlng = data['result'].split(',');
-                marker = new google.maps.Marker({
+                marker = new MarkerWithLabel({
                     map: map,
                     position: new google.maps.LatLng(parseFloat(latlng[0]), parseFloat(latlng[1])),
-                    draggable: true
+                    draggable: true,
+                    raiseOnDrag: true,
+                    labelContent: tr.children('td').eq(1).children('div.clsDivNormalMode').children('span').text(),
+                    labelAnchor: new google.maps.Point(22, 0),
+                    labelClass: "marker-label", // the CSS class for the label
+                    labelStyle: {opacity: 0.75}
                 });
                 map.panTo(marker.getPosition());
                 marker_dragend_listener = google.maps.event.addListener(marker, 'dragend', function(mouseEvent){
