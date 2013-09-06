@@ -628,7 +628,7 @@ class CostcoStoreCRUD(BaseHandler):
         self.response.status_int = 200
 
         store_id = self.request.get('id')
-        if store_id:
+        if store_id:  # update store properties
             storeEntity = models.Store.get_by_id(store_id)
             if storeEntity:
                 setValue = self.request.get('v')
@@ -650,11 +650,48 @@ class CostcoStoreCRUD(BaseHandler):
                     self.response.status_int = 400
             else:
                 self.response.status_int = 404
-        else:
-            self.response.status_int = 400
 
-        if self.response.status_int == 200:
-            storeEntity.put()
+            # write to datastore
+            if self.response.status_int == 200:
+                storeEntity.put()
+
+        else:  # publish or unpublish stores
+            state = self.request.get('state')
+            if state == 'publish':
+                published_store = models.PublishedStores(id=models.COSTCO_PUBLISHED_STORES)
+                store_list = []
+                allStoresInDS = models.Store.query()
+                for store_in_ds in allStoresInDS:
+                    # prepare published field for each store
+                    store_dict = dict()
+                    store_dict['id'] = store_in_ds.key.id()
+                    store_dict['name'] = store_in_ds.name
+                    store_dict['address'] = store_in_ds.address
+                    store_dict['phone'] = store_in_ds.phone
+                    store_dict['services'] = store_in_ds.services
+                    store_dict['geo'] = store_in_ds.geo.__unicode__()
+                    store_dict['modified'] = int(store_in_ds.modified.strftime('%s'))  # datetime to epoch time
+                    bh_list = []
+                    for bh in store_in_ds.businessHour:
+                        bh_dict = dict()
+                        bh_dict['day_of_week_begin'] = bh.dayOfWeekBegin
+                        bh_dict['day_of_week_end'] = bh.dayOfWeekEnd
+                        bh_dict['hour_of_day_begin'] = bh.hourBegin.strftime('%H:%M')
+                        bh_dict['hour_of_day_end'] = bh.hourEnd.strftime('%H:%M')
+                        bh_list.append(bh_dict)
+                    store_dict['businessHour'] = bh_list
+
+                    store_list.append(store_dict)
+                #logging.debug(store_list)
+                published_store.stores = store_list
+                published_store.put()
+
+            elif state == 'unpublish':
+                published_store_key = ndb.Key(models.PublishedStores, models.COSTCO_PUBLISHED_STORES)
+                if published_store_key:
+                    published_store_key.delete()
+            else:
+                self.response.status_int = 400
 
     def delete(self):
 
@@ -663,6 +700,26 @@ class CostcoStoreCRUD(BaseHandler):
             storeEntity = models.Store.get_by_id(store_id)
             if storeEntity:
                 storeEntity.key.delete_async()
+
+
+class ApiV1CostcoStoreWhatsNew(webapp2.RequestHandler):
+
+    def get(self):
+
+        stores = []
+
+        storesDS = models.PublishedStores.get_by_id(models.COSTCO_PUBLISHED_STORES)
+        if storesDS:
+            client_timestamp = self.request.get('timestamp')
+            if client_timestamp:  # filter by client timestamp
+                for store in storesDS.stores:
+                    if store['modified'] > int(client_timestamp):
+                        stores.append(store)
+            else:  # no filter at all
+                stores = storesDS.stores
+
+        self.response.content_type = 'application/json'
+        self.response.body = json.dumps(stores, indent=None, separators=(',', ':'))
 
 
 ###########################################################################
@@ -677,5 +734,6 @@ routes = [
     webapp2.Route(r'/api/v1/costco/whatsnew', handler=ApiV1CostcoWhatsNew),
     webapp2.Route(r'/api/v1/costco/events', handler=ApiV1CostcoEvents),
     webapp2.Route(r'/api/v1/costco/event/<event_id:[1-9]\d*>', ApiV1CostcoEventDetail),
-    RedirectRoute(r'/costco/stores', handler=CostcoStoreCRUD, name='costco-store-crud', strict_slash=True)
+    RedirectRoute(r'/costco/stores', handler=CostcoStoreCRUD, name='costco-store-crud', strict_slash=True),
+    webapp2.Route(r'/api/v1/costco/stores/whatsnew', handler=ApiV1CostcoStoreWhatsNew),
 ]

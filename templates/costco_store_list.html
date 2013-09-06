@@ -64,6 +64,18 @@ td.clsCellStoreIndex button {
 </style>
 {% endblock mediaCSS %}
 
+{% block navbar_list_items %}
+<li>
+    <div class="btn-group">
+        <a href="/dashboard" class="btn"><i class="icon-arrow-left"></i>Back to dashboard</a>
+    </div>
+    <div class="btn-group">
+        <button class="btn clsBtnStorePublishUnpublish"><i class="icon-play"></i><span>Publish</span></button>
+        <button class="btn clsBtnStorePublishUnpublish"><i class="icon-pause"></i><span>Unpublish</span></button>
+    </div>
+</li>
+{% endblock navbar_list_items %}
+
 {# form input field with kwarg support #}
 {% macro input(name, label, type='text', class='input-block-level', simple='false') -%}
     {% if simple == 'false' %}<label>{{ label }}</label>{% endif %}
@@ -453,6 +465,26 @@ $('.clsBtnDeleteStore').on('click', function(){
             window.location.reload();
         }).fail(function(e){
             console.log(e);
+        });
+    }
+});
+
+/* store publish unpublish */
+$('.clsBtnStorePublishUnpublish').on('click', function(){
+    var btnText = $(this).children('span').text();
+
+    var confirm = window.confirm('Are you sure you want to ' + btnText + ' stores?');
+    if (confirm == true) {
+        $.ajax({
+            url: '/costco/stores',
+            type: 'PUT',
+            data: {
+                state: btnText.toLowerCase()
+            }
+        }).done(function(){
+            window.alert(btnText + ' process completed.');
+        }).fail(function(){
+            window.alert(btnText + ' process failed.');
         });
     }
 });

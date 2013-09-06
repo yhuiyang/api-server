@@ -150,6 +150,10 @@ class Store(ndb.Model):
     businessHour = ndb.LocalStructuredProperty(BusinessHour, repeated=True, indexed=False)
     geo = ndb.GeoPtProperty(required=True, indexed=False)
     services = ndb.StringProperty(required=True, indexed=False)
+    modified = ndb.DateTimeProperty(auto_now=True, indexed=False)
+
+
+COSTCO_PUBLISHED_STORES = 'CostcoPublishedStores'
 
 
 class PublishedStores(ndb.Model):
