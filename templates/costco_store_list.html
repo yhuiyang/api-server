@@ -45,9 +45,9 @@ td.clsCellStoreIndex button {
     display: none;
 }
 
-#map-canvas {
-    height: 350px;
-    /*width: 100%;*/
+.map-canvas {
+    height: 280px;
+    width: 320px;
 }
 
 .marker-label {
@@ -230,13 +230,12 @@ td.clsCellStoreIndex button {
                 {%- endfor %}
             </td>
             <td editmode="false"><div class="clsDivEditMode">{{ textarea('services', simple='true', rows='10') }}{{ textarea_field_submit_btn(n='services') }}</div><div class="clsDivNormalMode"><span style='white-space: pre;'>{{ store.services }}</span>{{ textarea_field_edit_btn(q='services') }}</div></td>
-            <td editmode="false"><div class="clsDivEditMode">{{ input('geo', simple='true') }}{{ input_field_submit_btn(n='geo') }}</div><div class="clsDivNormalMode"><span>{{ store.geo }}</span>{{ input_field_edit_btn(q='geo') }}</div></td>
+            <td editmode="false"><div class="clsDivEditMode">{{ input('geo', simple='true') }}{{ input_field_submit_btn(n='geo') }}</div><div class="clsDivNormalMode"><span>{{ store.geo }}</span>{{ input_field_edit_btn(q='geo') }}</div><div class="map-canvas"/></td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 {% endif %}
-<div id="map-canvas" />
 
 {% endblock content %}
 
@@ -248,19 +247,49 @@ td.clsCellStoreIndex button {
 
 <script type="text/javascript">
 
-var map;
-var marker;
-var marker_dragend_listener;
+var maps = new Array();
+var markers = new Array();
+var marker_init_positions = new Array();
+var marker_dragend_listeners = new Array();
 
 $(document).ready(function() {
 
-    var mapOptions = {
-        center: new google.maps.LatLng(0, 0),
-        zoom: 8,
-        mapTypeId: google.maps.MapTypeId.ROADMAP
-    };
-    google.maps.visualRefresh = true;
-    map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
+    {% if stores %}
+        google.maps.visualRefresh = true;
+        var mapOptions;
+        var latLng;
+        var latLngText;
+        var split;
+
+        var domMaps = document.getElementsByClassName('map-canvas');
+        var mapCount = domMaps.length;
+        for (var idx = 0; idx < mapCount; idx++) {
+
+            /* retrieve latlng text and convert to LatLng */
+            latLngText = domMaps[idx].previousElementSibling.firstElementChild.innerText;
+            split = latLngText.split(',');
+            latLng = new google.maps.LatLng(parseFloat(split[0]), parseFloat(split[1]));
+
+            /* map */
+            mapOptions = {
+                center: latLng,
+                zoom: 15,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+            maps[idx] = new google.maps.Map(domMaps[idx], mapOptions);
+
+            /* marker */
+            markers[idx] = new MarkerWithLabel({
+                map: maps[idx],
+                position: latLng,
+                labelContent: domMaps[idx].parentNode.parentNode.firstElementChild.nextElementSibling.firstElementChild.nextElementSibling.firstElementChild.innerText,
+                labelAnchor: new google.maps.Point(22, 0),
+                labelClass: "marker-label", // the CSS class for the label
+                labelStyle: {opacity: 0.75}
+            });
+        }
+    {% endif %}
+
 });
 
 /* store form show/hide stuff */
@@ -327,28 +356,22 @@ $('.clsBtnRequestEditInput').on('click', function(){
         input.val(data['result']);
 
         if (qItem == 'geo') {
-            if (map) {
-                /* clear old marker and drag listener */
-                if (marker_dragend_listener != null) {
-                    google.maps.event.removeListener(marker_dragend_listener);
-                }
-                if (marker != null) {
-                    marker.setMap(null);
-                }
-                var latlng = data['result'].split(',');
-                marker = new MarkerWithLabel({
-                    map: map,
-                    position: new google.maps.LatLng(parseFloat(latlng[0]), parseFloat(latlng[1])),
-                    draggable: true,
-                    raiseOnDrag: true,
-                    labelContent: tr.children('td').eq(1).children('div.clsDivNormalMode').children('span').text(),
-                    labelAnchor: new google.maps.Point(22, 0),
-                    labelClass: "marker-label", // the CSS class for the label
-                    labelStyle: {opacity: 0.75}
-                });
-                map.panTo(marker.getPosition());
-                marker_dragend_listener = google.maps.event.addListener(marker, 'dragend', function(mouseEvent){
-                    input.val(mouseEvent.latLng.toUrlValue());
+
+            var idx = $('tbody').children('tr').index(tr); /* find out which row index we are */
+
+            if (maps[idx]) {
+
+                /* make marker draggable */
+                if (markers[idx])
+                    markers[idx].setDraggable(true);
+
+                /* pan to marker */
+                marker_init_positions[idx] = markers[idx].getPosition();
+                maps[idx].panTo(marker_init_positions[idx]);
+
+                /* add marker dragend listener */
+                marker_dragend_listeners[idx] = google.maps.event.addListener(markers[idx], 'dragend', function(event){
+                    input.val(event.latLng.toUrlValue());
                 });
             }
         }
@@ -357,15 +380,22 @@ $('.clsBtnRequestEditInput').on('click', function(){
     });
 });
 $('.clsBtnQuitEditInput').on('click', function(){
+    var td = $(this).closest('td');
     /* quit edit mode */
-    $(this).closest('td').attr('editmode', 'false');
+    td.attr('editmode', 'false');
 
-    /* remove marker if need */
-    if (marker_dragend_listener != null) {
-        google.maps.event.removeListener(marker_dragend_listener);
-    }
-    if (marker != null) {
-        marker.setMap(null);
+    /* check if this is quit from geo: geo column has 3 children, others have 2. */
+    if (td.children().length > 2) {
+        var row_idx = $('tbody').children('tr').index($(this).closest('tr'));
+        /* make marker not draggable and reset position */
+        if (markers[row_idx]) {
+            markers[row_idx].setDraggable(false);
+            markers[row_idx].setPosition(marker_init_positions[row_idx]);
+            if (maps[row_idx])
+                maps[row_idx].panTo(markers[row_idx].getPosition());
+
+            google.maps.event.removeListener(marker_dragend_listeners[row_idx]);
+        }
     }
 });
 $('.clsBtnSubmitInput').on('click', function(){
@@ -373,6 +403,8 @@ $('.clsBtnSubmitInput').on('click', function(){
     var name = $(this).attr('n');
     var td = $(this).closest('td');
     var value = td.children('div.clsDivEditMode').children('input').val();
+    var in_geo_edit = (td.children().length > 2);
+    var row_idx = $('tbody').children('tr').index($(this).closest('tr'));
 
     $.ajax({
         url: '/costco/stores',
@@ -384,16 +416,35 @@ $('.clsBtnSubmitInput').on('click', function(){
         }
     }).done(function(){
         td.children('div.clsDivNormalMode').children('span').html(value); /* use text(value) will add extra " */
-        td.attr('editmode', 'false');
-    }).fail(function(){
-        console.log('Fail to update ' + name + ' to ' + value);
-        td.attr('editmode', 'false');
-    }).always(function(){
-        if (marker_dragend_listener != null) {
-            google.maps.event.removeListener(marker_dragend_listener);
+
+        /* update marker position by value in input field. (So, directly edit input field works too) */
+        if (in_geo_edit) {
+            var split = value.split(',');
+            var updatedLatLng = new google.maps.LatLng(parseFloat(split[0]), parseFloat(split[1]));
+            if (markers[row_idx] != null)
+                markers[row_idx].setPosition(updatedLatLng);
         }
-        if (marker != null) {
-            marker.setMap(null);
+    }).fail(function(){
+        console.error('Fail to update ' + name + ' to ' + value);
+        /* reset marker if need */
+        if (in_geo_edit) {
+            if (markers[row_idx] != null)
+                markers[row_idx].setPosition(marker_init_positions[row_idx]);
+        }
+    }).always(function(){
+
+        /* quit edit mode */
+        td.attr('editmode', 'false');
+
+        /* remove dragend listener on marker */
+        if (in_geo_edit) {
+            if (markers[row_idx] != null) {
+                markers[row_idx].setDraggable(false);
+                if (maps[row_idx])
+                    maps[row_idx].panTo(markers[row_idx].getPosition());
+            }
+
+            google.maps.event.removeListener(marker_dragend_listeners[row_idx]);
         }
     });
 });
