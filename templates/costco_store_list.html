@@ -209,7 +209,7 @@ td.clsCellStoreIndex button {
 <table class="table table-striped table-hover">
     <thead>
         <tr>
-            <th>#</th>
+            <th style="text-align: center;">#</th>
             <th>Name</th>
             <th>Address</th>
             <th>Phone</th>
@@ -221,7 +221,7 @@ td.clsCellStoreIndex button {
     <tbody>
         {% for store in stores %}
         <tr id="{{ store.id }}">
-            <td class="clsCellStoreIndex">{{ loop.index }}<button class="btn btn-mini clsBtnDeleteStore"><i class="icon-trash"></i></button></td>
+            <td class="clsCellStoreIndex" style="text-align: center; width: 28px;">{{ loop.index }}<button class="btn btn-mini clsBtnDeleteStore"><i class="icon-trash"></i></button></td>
             <td editmode="false"><div class="clsDivEditMode">{{ input('name', simple='true') }}{{ input_field_submit_btn(n='name') }}</div><div class="clsDivNormalMode"><span>{{ store.name }}</span>{{ input_field_edit_btn(q='name') }}</div></td>
             <td editmode="false"><div class="clsDivEditMode">{{ textarea('address', simple='true') }}{{ textarea_field_submit_btn(n='address') }}</div><div class="clsDivNormalMode"><span style='white-space: pre;'>{{ store.address }}</span>{{ textarea_field_edit_btn(q='address') }}</div></td>
             <td editmode="false"><div class="clsDivEditMode">{{ input('phone', simple='true') }}{{ input_field_submit_btn(n='phone') }}</div><div class="clsDivNormalMode"><span>{{ store.phone }}</span>{{ input_field_edit_btn(q='phone') }}</div></td>
