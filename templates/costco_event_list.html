@@ -17,6 +17,14 @@
 </style>
 {% endblock mediaCSS %}
 
+{% block navbar_list_items %}
+<li>
+    <div class="btn-group">
+        <a href="/dashboard" class="btn"><i class="icon-arrow-left"></i>Back to dashboard</a>
+    </div>
+</li>
+{% endblock navbar_list_items %}
+
 {% block content %}
 <div id="myForm"  class="collapse">
     <form class="form-horizontal" id="form-background" action="/costco/events" method="post">

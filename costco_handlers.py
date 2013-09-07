@@ -86,7 +86,7 @@ class CostcoEventCRUD(BaseHandler):
         #logging.debug(events)
 
         params = {
-            'app_name': 'Costco',
+            'app_name': 'Costco Events Offers',
             'events': events
         }
         self.render_response('costco_event_list.html', **params)
@@ -151,7 +151,7 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         logging.debug(item_list)
 
         params = {
-            'app_name': 'Costco',
+            'app_name': 'Costco Events Offers',
             'event': eventEntity,
             'Items': item_list,
         }
