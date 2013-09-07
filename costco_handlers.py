@@ -150,10 +150,22 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
             item_list.append(item_prop)
         logging.debug(item_list)
 
+        # populate store list for exhibition type event
+        published_store_select = []
+        if eventEntity.type == 'exhibition':
+            storesDS = models.PublishedStores.get_by_id(models.COSTCO_PUBLISHED_STORES)
+            if storesDS:
+                for store in storesDS.stores:
+                    sel = dict()
+                    sel['value'] = store['id']
+                    sel['name'] = store['name']
+                    published_store_select.append(sel)
+
         params = {
             'app_name': 'Costco Events Offers',
             'event': eventEntity,
             'Items': item_list,
+            'store_select_list': published_store_select,
         }
         self.render_response('costco_event_item_list.html', **params)
 

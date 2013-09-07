@@ -15,3 +15,16 @@
         </div>
     </div>
 {%- endmacro %}
+
+{% macro select_field(name, label, options, id='', class='', tooltip='', multiple='') %}
+    <div class="control-group">
+        <label class="control-label"{% if tooltip %} title="{{ tooltip }}"{% endif %}>{{ label }}:</label>
+        <div class="controls">
+            <select{% if id %} id="{{ id }}"{% endif %}{% if class %} class="{{ class }}"{% endif %} name="{{ name }}" size="{{ options | length }}"{% if multiple %} multiple="{{ multiple}}"{% endif %}>
+                {% for opt in options %}
+                    <option value="{{ opt.value }}">{{ opt.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+{% endmacro %}

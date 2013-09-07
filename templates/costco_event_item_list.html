@@ -64,22 +64,7 @@
                 {{ macros.textarea_field("title", "Title", tooltip="Exhibition title", class="input-xlarge") }}
                 {{ macros.input_field("start", "Start date", type="date", tooltip="Exhibition start date") }}
                 {{ macros.input_field("end", "End date", type="date", tooltip="Exhibition end date") }}
-            <div class="control-group">
-                <label class="control-label" title="Exhibition locations, multiple choices">Locations</label>
-                <div class="controls">
-                    <select multiple="multiple" name="locations" size="9" requried>
-                        <option value="Shihchih">汐止店</option>
-                        <option value="Neihu">內湖店</option>
-                        <option value="Chungho">中和店</option>
-                        <option value="Taoyuan">桃園店</option>
-                        <option value="Hsinchu">新竹店</option>
-                        <option value="Taichung">台中店</option>
-                        <option value="Tainan">台南店</option>
-                        <option value="Dashun">大順店</option>
-                        <option value="Kaohsiung">高雄店</option>
-                    </select>
-                </div>
-            </div>
+                {{ macros.select_field("locations", "Locations", store_select_list, tooltip="Exhibition locations, multiple choices", multiple="multiple") }}
             {% elif event.type == 'announcement' %}
                 {{ macros.textarea_field("title", "Title", class="input-xlarge", tooltip="Announcement title") }}
                 {{ macros.textarea_field("content", "Content", class="input-xxlarge", rows="5", tooltip="Announcement detailed content") }}
@@ -228,22 +213,7 @@
                 {{ macros.textarea_field("title", "Title", id="idExhibitionTitle") }}
                 {{ macros.input_field("start", "Start", type="date", id="idExhibitionStart") }}
                 {{ macros.input_field("end", "End", type="date", id="idExhibitionEnd") }}
-            <div class="control-group">
-                <label class="control-label">Locations</label>
-                <div class="controls">
-                    <select id="idExhibitionLocations" name="locations" multiple="multiple" size="9">
-                        <option value="Shihchih">汐止店</option>
-                        <option value="Neihu">內湖店</option>
-                        <option value="Chungho">中和店</option>
-                        <option value="Taoyuan">桃園店</option>
-                        <option value="Hsinchu">新竹店</option>
-                        <option value="Taichung">台中店</option>
-                        <option value="Tainan">台南店</option>
-                        <option value="Dashun">大順店</option>
-                        <option value="Kaohsiung">高雄店</option>
-                    </select>
-                </div>
-            </div>
+                {{ macros.select_field("locations", "Locations", store_select_list, id="idExhibitionLocations", multiple="multiple") }}
             {% elif event.type == 'announcement' %}
                 {{ macros.textarea_field("title", "Title", id="idAnnouncementTitle") }}
                 {{ macros.textarea_field("content", "Content", id="idAnnouncementContent", class="input-block-level", rows="5") }}
