@@ -1,26 +1,26 @@
-{% macro input_field(name, label, type='text', id='', class='', tooltip='') %}
+{% macro input_field(name, label, type='text', id='', class='', tooltip='', required='') %}
     <div class="control-group">
         <label class="control-label"{% if tooltip %} title="{{ tooltip }}"{% endif %}>{{ label }}:</label>
         <div class="controls">
-            <input type="{{ type }}"{% if id %} id="{{ id }}"{% endif %}{% if class %} class="{{ class }}"{% endif %} name="{{ name }}" />
+            <input type="{{ type }}"{% if id %} id="{{ id }}"{% endif %}{% if class %} class="{{ class }}"{% endif %} name="{{ name }}"{% if required %} required{% endif %}/>
         </div>
     </div>
 {%- endmacro %}
 
-{% macro textarea_field(name, label, rows='2', id='', class='', tooltip='') %}
+{% macro textarea_field(name, label, rows='2', id='', class='', tooltip='', required='') %}
     <div class="control-group">
-        <label class="control-label"{% if tooltip %}title="{{ tooltip }}"{% endif %}>{{ label }}:</label>
+        <label class="control-label"{% if tooltip %} title="{{ tooltip }}"{% endif %}>{{ label }}:</label>
         <div class="controls">
-            <textarea{% if id %} id="{{ id }}"{% endif %}{% if class %} class="{{ class }}"{% endif %} rows="{{ rows }}" name="{{ name }}"></textarea>
+            <textarea{% if id %} id="{{ id }}"{% endif %}{% if class %} class="{{ class }}"{% endif %} rows="{{ rows }}" name="{{ name }}"{% if required %} required{% endif %}></textarea>
         </div>
     </div>
 {%- endmacro %}
 
-{% macro select_field(name, label, options, id='', class='', tooltip='', multiple='') %}
+{% macro select_field(name, label, options, id='', class='', tooltip='', multiple='', required='') %}
     <div class="control-group">
         <label class="control-label"{% if tooltip %} title="{{ tooltip }}"{% endif %}>{{ label }}:</label>
         <div class="controls">
-            <select{% if id %} id="{{ id }}"{% endif %}{% if class %} class="{{ class }}"{% endif %} name="{{ name }}" size="{{ options | length }}"{% if multiple %} multiple="{{ multiple}}"{% endif %}>
+            <select{% if id %} id="{{ id }}"{% endif %}{% if class %} class="{{ class }}"{% endif %} name="{{ name }}" size="{{ options | length }}"{% if multiple %} multiple="{{ multiple }}"{% endif %}{% if required %} required{% endif %}>
                 {% for opt in options %}
                     <option value="{{ opt.value }}">{{ opt.name }}</option>
                 {% endfor %}
