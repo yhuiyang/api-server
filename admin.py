@@ -23,7 +23,7 @@ import webapp2
 
 # local imports
 from base_handlers import routes as base_routes
-from costco_handlers import routes as costco_routes
+from admin_costco_handlers import routes as costco_routes
 
 
 _debug = os.environ.get('SERVER_SOFTWARE').startswith('Dev')
@@ -33,4 +33,4 @@ _routes = []
 _routes.extend(base_routes)
 _routes.extend(costco_routes)
 
-app = webapp2.WSGIApplication(routes=_routes, config=_config, debug=_debug)
+APP = webapp2.WSGIApplication(routes=_routes, config=_config, debug=_debug)

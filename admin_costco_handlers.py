@@ -403,77 +403,6 @@ class CostcoEventItemImageUpload(webapp2.RequestHandler):
         self.response.body = json.dumps(upload_url)
 
 
-class ApiV1CostcoWhatsNew(BaseHandler):
-
-    def get(self):
-
-        # retrieve latest event timestamp in client side
-        str_client_latest = self.request.get('timestamp')
-        if str_client_latest:
-            int_client_latest = int(str_client_latest)
-        else:
-            int_client_latest = 0
-
-        # query event manager the newer events
-        eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
-        int_version_list = []
-        for meta in eventMgrEntity.listPublishedMeta:
-            if int_client_latest < int(meta.created.strftime('%s')):
-                int_version_list.append(meta.version)
-        int_version_list.sort(reverse=True)
-
-        self.response.content_type = 'application/json'
-        self.response.body = json.dumps(int_version_list)
-
-
-class ApiV1CostcoEvents(BaseHandler):
-
-    def get(self):
-
-        # EventManager holds published event meta list, which holds version number and created time for each event
-        eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
-        int_version_list = []
-        for meta in eventMgrEntity.listPublishedMeta:
-            int_version_list.append(meta.version)
-        int_version_list.sort(reverse=True)
-
-        self.response.content_type = 'application/json'
-        self.response.body = json.dumps(int_version_list)
-
-
-class ApiV1CostcoEventDetail(BaseHandler):
-
-    def get(self, event_id):
-
-        self.response.content_type = 'application/json'
-
-        strEventVer = event_id
-        intEventVer = int(event_id)
-
-        # check if event with this version is published or not
-        eventMgrEntity = models.EventManager.get_or_insert(models.COSTCO_EVENT_MANAGER)
-        metaIdx = 0
-        for meta in eventMgrEntity.listPublishedMeta:
-            if meta.version == intEventVer:
-                break
-            metaIdx += 1
-        if metaIdx >= len(eventMgrEntity.listPublishedMeta):
-            logging.warning('Bad client! It requests an unpublished event!')
-            resp = {'error': 'Requested event is not yet published!'}
-            self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
-            return
-
-        publishedEventEntity = models.PublishedEvent.get_by_id(strEventVer)
-        if publishedEventEntity is None:
-            logging.error('There is version number in published version list, but not published event entity!')
-            resp = {'error': 'Internal error!'}
-        else:
-            resp = publishedEventEntity.event_data
-            # append published event created epoch time
-            resp['created'] = int(eventMgrEntity.listPublishedMeta[metaIdx].created.strftime('%s'))
-        self.response.body = json.dumps(resp, indent=None, separators=(',', ':'))
-
-
 def getCachedCostcoAllEventMajorVersions(requestType='str'):
     """
     Return a json string (requestType='str') or python list (requestType='list') which contains a array or list of
@@ -714,26 +643,6 @@ class CostcoStoreCRUD(BaseHandler):
                 storeEntity.key.delete_async()
 
 
-class ApiV1CostcoStoreWhatsNew(webapp2.RequestHandler):
-
-    def get(self):
-
-        stores = []
-
-        storesDS = models.PublishedStores.get_by_id(models.COSTCO_PUBLISHED_STORES)
-        if storesDS:
-            client_timestamp = self.request.get('timestamp')
-            if client_timestamp:  # filter by client timestamp
-                for store in storesDS.stores:
-                    if store['modified'] > int(client_timestamp):
-                        stores.append(store)
-            else:  # no filter at all
-                stores = storesDS.stores
-
-        self.response.content_type = 'application/json'
-        self.response.body = json.dumps(stores, indent=None, separators=(',', ':'))
-
-
 ###########################################################################
 # Items
 ###########################################################################
@@ -775,15 +684,10 @@ class CostcoItemCRUD(BaseHandler):
 # Routes
 ###########################################################################
 routes = [
-    RedirectRoute(r'/costco/event/<event_id:[1-9]\d*>', handler=CostcoEventItemCRUD,
-                  name='costco-event-item-crud', strict_slash=True),
+    RedirectRoute(r'/costco/event/<event_id:[1-9]\d*>', handler=CostcoEventItemCRUD, name='costco-event-item-crud',
+                  strict_slash=True),
     webapp2.Route(r'/costco/event/<event_id:[1-9]\d*>/upload', CostcoEventItemImageUpload),
-    RedirectRoute(r'/costco/events', handler=CostcoEventCRUD,
-                  name='costco-event-crud', strict_slash=True),
-    webapp2.Route(r'/api/v1/costco/whatsnew', handler=ApiV1CostcoWhatsNew),
-    webapp2.Route(r'/api/v1/costco/events', handler=ApiV1CostcoEvents),
-    webapp2.Route(r'/api/v1/costco/event/<event_id:[1-9]\d*>', ApiV1CostcoEventDetail),
+    RedirectRoute(r'/costco/events', handler=CostcoEventCRUD, name='costco-event-crud', strict_slash=True),
     RedirectRoute(r'/costco/stores', handler=CostcoStoreCRUD, name='costco-store-crud', strict_slash=True),
-    webapp2.Route(r'/api/v1/costco/stores/whatsnew', handler=ApiV1CostcoStoreWhatsNew),
     RedirectRoute(r'/costco/items', handler=CostcoItemCRUD, name='costco-item-crud', strict_slash=True),
 ]

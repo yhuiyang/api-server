@@ -1,0 +1,26 @@
+application: your-application-id
+module: default
+version: dev
+runtime: python27
+api_version: 1
+threadsafe: yes
+
+instance_class: F1
+automatic_scaling:
+  max_idle_instances: 2
+  min_pending_latency: 15.0s
+
+builtins:
+- appstats: on
+
+handlers:
+- url: /robots\.txt
+  static_files: static/robots.txt
+  upload: static/robots\.txt
+
+- url: /.*
+  script: api.APP
+
+libraries:
+- name: webapp2
+  version: "2.5.2"
