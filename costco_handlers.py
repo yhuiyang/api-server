@@ -735,6 +735,43 @@ class ApiV1CostcoStoreWhatsNew(webapp2.RequestHandler):
 
 
 ###########################################################################
+# Items
+###########################################################################
+class CostcoItemCRUD(BaseHandler):
+
+    def get(self):
+
+        items = []
+
+        item = dict()
+        item['id'] = '001234'
+        item['brand'] = 'Brand'
+        item['cname'] = 'Good'
+        item['ename'] = 'Bad'
+        item['price'] = 23
+        images = []
+        image = dict()
+        image['serving_url'] = 'serving_url'
+        image['blob_key_str'] = 'str(blobkey)'
+        images.append(image)
+        image.clear()
+        item['images'] = images
+        items.append(item)
+
+        params = {
+            'app_name': 'Costco Items',
+            'items': items,
+        }
+        self.render_response('costco_item_list.html', **params)
+
+    def post(self):
+
+        logging.info(self.request.POST)
+
+        self.redirect_to('costco-item-crud')
+
+
+###########################################################################
 # Routes
 ###########################################################################
 routes = [
@@ -748,4 +785,5 @@ routes = [
     webapp2.Route(r'/api/v1/costco/event/<event_id:[1-9]\d*>', ApiV1CostcoEventDetail),
     RedirectRoute(r'/costco/stores', handler=CostcoStoreCRUD, name='costco-store-crud', strict_slash=True),
     webapp2.Route(r'/api/v1/costco/stores/whatsnew', handler=ApiV1CostcoStoreWhatsNew),
+    RedirectRoute(r'/costco/items', handler=CostcoItemCRUD, name='costco-item-crud', strict_slash=True),
 ]

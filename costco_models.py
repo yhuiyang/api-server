@@ -158,3 +158,36 @@ COSTCO_PUBLISHED_STORES = 'CostcoPublishedStores'
 
 class PublishedStores(ndb.Model):
     stores = ndb.JsonProperty(required=True, indexed=False)
+
+
+###########################################################################
+# Database Items
+###########################################################################
+class ItemImage(ndb.Model):
+    blob_key_str = ndb.StringProperty()
+    serving_url = ndb.StringProperty()
+
+
+class Item(ndb.Model):  # use code as key id string
+    brand = ndb.StringProperty(name='b', required=True, indexed=False)
+    cname = ndb.StringProperty(name='c', required=True, indexed=False)
+    ename = ndb.StringProperty(name='e', indexed=False)
+    description = ndb.TextProperty(name='d')
+    price = ndb.IntegerProperty(name='p', indexed=False)
+    unit = ndb.StringProperty(name='u', indexed=False)
+    images = ndb.LocalStructuredProperty(ItemImage, name='i', indexed=False, repeated=True)
+    published = ndb.BooleanProperty(name='pub', default=False)
+
+
+class PublishedItem(ndb.Model):
+    data = ndb.JsonProperty(required=True)
+
+
+class PublishedItemMeta(ndb.Model):
+    epoch_timestamp = ndb.IntegerProperty(name='e', indexed=False, required=True)
+    key_id_str = ndb.StringProperty(name='k', indexed=False, required=True)
+
+
+class PublishedItemManager(ndb.Model):
+    meta = ndb.LocalStructuredProperty(PublishedItemMeta, repeated=True)
+    next = ndb.StringProperty(name='n', indexed=False)  # key id string for next manager entity
