@@ -22,7 +22,7 @@ import os
 import webapp2
 
 # local imports
-from base_handlers import routes as base_routes
+from admin_base_handlers import routes as base_routes
 from admin_costco_handlers import routes as costco_routes
 
 

@@ -33,7 +33,7 @@ from google.appengine.ext.webapp import blobstore_handlers
 
 # local imports
 import costco_models as models
-from base_handlers import BaseHandler
+from admin_base_handlers import BaseHandler
 
 
 ###########################################################################
