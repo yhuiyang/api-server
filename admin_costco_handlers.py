@@ -24,11 +24,9 @@ from datetime import time
 
 # GAE imports
 import webapp2
-from webapp2_extras.appengine.users import admin_required
 from webapp2_extras.routes import RedirectRoute
 from google.appengine.api import images
 from google.appengine.api import memcache
-from google.appengine.api import users
 from google.appengine.ext import ndb
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
@@ -63,7 +61,6 @@ class CostcoEventCRUD(BaseHandler):
 
         return eventMajorVerList
 
-    @admin_required
     def get(self):
 
         eventMajorVerList = self.getAllEventMajorVersionList()
@@ -92,9 +89,6 @@ class CostcoEventCRUD(BaseHandler):
         self.render_response('costco_event_list.html', **params)
 
     def post(self):
-
-        if not users.is_current_user_admin():
-            self.abort(403)
 
         start_date = self.request.get('date-start')
         end_date = self.request.get('date-end')
@@ -130,7 +124,6 @@ class CostcoEventCRUD(BaseHandler):
 
 class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler):
 
-    @admin_required
     def get(self, event_id):
 
         # find all items belongs to this event
@@ -170,9 +163,6 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         self.render_response('costco_event_item_list.html', **params)
 
     def post(self, event_id):
-
-        if not users.is_current_user_admin():
-            self.abort(403)
 
         upload_files = self.get_uploads('file')
         blob_info = upload_files[0]
@@ -231,9 +221,6 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         self.redirect_to('costco-event-item-crud', event_id=event_id, _code=303)
 
     def put(self, event_id):
-
-        if not users.is_current_user_admin():
-            self.abort(403)
 
         intEventMajorVer = (int(event_id) / 100) * 100
         strEventMajorVer = str(intEventMajorVer)
@@ -364,9 +351,6 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
 
     def delete(self, event_id):
 
-        if not users.is_current_user_admin():
-            self.abort(403)
-
         # delete image in blobstore & serving url
         strBlobKey = self.request.get('blob_key')
         if strBlobKey:
@@ -391,7 +375,6 @@ class CostcoEventItemCRUD(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
 
 class CostcoEventItemImageUpload(webapp2.RequestHandler):
 
-    @admin_required
     def get(self, event_id):
 
         self.response.content_type = 'application/json'
@@ -458,7 +441,6 @@ def appendCachedCostcoAllEventMajorVersions(intMajorVersion):
 ###########################################################################
 class CostcoStoreCRUD(BaseHandler):
 
-    @admin_required
     def get(self):
 
         # Check if any query string exists, if exist, simple return json response instead of html page.
