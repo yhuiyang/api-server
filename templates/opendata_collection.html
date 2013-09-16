@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block mediaCSS %}
+<style type="text/css">
+@media (min-width: 981px) {
+    body {
+        padding-top: 60px;
+    }
+}
+td.ps-parse-state.unparsed :first-child, td-ps-parse-state.processing :nth-child(2), td.ps-parse-state.parsed :nth-child(3) {
+    display: inline;
+}
+td.ps-parse-state.processing :first-child, td.ps-parse-state.parsed :first-child, td.ps-parse-state.unparsed :nth-child(2), td.ps-parse-state.parsed :nth-child(2), td.ps-parse-state.unparsed :nth-child(3), td.ps-parse-state.processing :nth-child(3) {
+    display: none;
+}
+</style>
+{% endblock mediaCSS %}
+
+{% block navbar_list_items %}
+<li>
+    <div class="btn-group">
+        <a href="/dashboard" class="btn"><i class="icon-arrow-left"></i><span>Back to dashboard</span></a>
+    </div>
+</li>
+{% endblock navbar_list_items %}
+
+{% block content %}
+<div class="tabbable tabs-left">
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#tab-police" data-toggle="tab">Police Stations</a></li>
+        <li><a href="#not_implement" data-toggle="tab">Not Implement</a></li>
+    </ul>
+    <div class="tab-content">
+        <div id="tab-police" class="tab-pane active">
+            <form action="pending" method="post" enctype="multipart/form-data">
+                <fieldset>
+                    <legend>Upload parsed police station raw data</legend>
+                    <input type="hidden" name="type" value="police_stations">
+                    <label>Raw data file:</label><input type="file" name="data-file" required>
+                    <label>Data date:</label><input type="date" name="data-date" required>
+                    <a id="idBtnUploadPoliceStationsRawData" class="btn btn-success">Upload</a>
+                </fieldset>
+            </form>
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>file name</th>
+                        <th>file size</th>
+                        <th>Data date</th>
+                        <th>Upload date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for ps in police_stations %}
+                    <tr id="{{ ps['keySafe'] }}">
+                        <td>{{ loop.index }}</td>
+                        <td>{{ ps['filename'] }}</td>
+                        <td>{{ ps['filesize'] }}</td>
+                        <td>{{ ps['datadate'] }}</td>
+                        <td>{{ ps['uploadDatetime'] }}</td>
+                        <td class="ps-parse-state {{ ps['parse_state'] }}">
+                            <button id="idBtnParsePoliceStationRawData" class="btn btn-danger">Parse and Populate</button>
+                            <span>Processing..., please wait and come back later.</span>
+                            <button id="idBtnCleanPoliceStationRawData" class="btn btn-warning">Clean up</button>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="not_implement" class="tab-pane">
+            <p>Not Implement</p>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block mediaJS %}
+<script type="text/javascript">
+$('#idBtnUploadPoliceStationsRawData').on('click', function() {
+    var form = $(this).closest('form');
+    var myself = $(this);
+
+    myself.attr('disabled', true);
+    $.ajax({
+        url: '/opendata/get_upload_url',
+        type: 'GET'
+    }).done(function(data) {
+        var upload_url = data[0];
+        form.attr('action', data[0]);
+        form.trigger('submit');
+    }).fail(function() {
+        console.error('Fail to retrieve blob upload url');
+    }).always(function() {
+        myself.removeAttr('disabled');
+    });
+});
+$('#idBtnParsePoliceStationRawData').on('click', function() {
+    var tr = $(this).closest('tr');
+    var td = $(this).closest('td');
+    var keySafe = tr.attr('id');
+    var myself = $(this);
+
+    $(this).prop('disabled', true);
+    $.ajax({
+        url: '/opendata',
+        type: 'PUT',
+        data: {
+            type: 'police_stations',
+            keySafe: keySafe,
+            action: 'populate'
+        }
+    }).done(function() {
+        td.removeClass('unparsed').addClass('processing');
+    }).fail(function() {
+    }).always(function() {
+        myself.prop('disabled', false);
+    });
+});
+$('#idBtnCleanPoliceStationRawData').on('click', function() {
+    var tr = $(this).closest('tr');
+    var td = $(this).closest('td');
+    var keySafe = tr.attr('id');
+    var myself = $(this);
+
+    $(this).prop('disabled', true);
+    $.ajax({
+        url: '/opendata',
+        type: 'PUT',
+        data: {
+            type: 'police_stations',
+            keySafe: keySafe,
+            action: 'clean'
+        }
+    }).done(function() {
+        td.removeClass('parsed').addClass('processing');
+    }).fail(function() {
+    }).always(function() {
+        myself.prop('disabled', false);
+    });
+});
+</script>
+{% endblock mediaJS %}
