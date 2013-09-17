@@ -107,7 +107,7 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                 background_thread.start_new_background_thread(
                     self.parse_police_stations_raw_data_and_populate_into_datastore, [keySafe])
             elif action == 'clean':
-                background_thread.start_new_background_thread(self.clean_up_police_stations_in_datastore)
+                background_thread.start_new_background_thread(self.clean_up_police_stations_in_datastore, [keySafe])
             else:
                 self.response.status_int = 400
         else:
@@ -148,9 +148,40 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         else:
             logging.warning('No raw data key provided!')
 
-    def clean_up_police_stations_in_datastore(self):
+    def clean_up_police_stations_in_datastore(self, keySafe):
 
-        logging.debug('Clean up police stations')
+        if keySafe:
+            raw_data = ndb.Key(urlsafe=keySafe).get()
+            if raw_data:
+                if raw_data.get_state() == models.STATE_PARSED:
+                    start_time = datetime.now()
+                    delete_count = 0
+                    has_more = True
+                    next_cursor = None
+
+                    raw_data.set_state(models.STATE_PROCESSING)
+                    raw_data.put()
+
+                    qry = models.PoliceStation.query()
+                    while has_more:
+                        result_page, next_cursor, has_more = qry.fetch_page(100, start_cursor=next_cursor)
+                        for ps in result_page:
+                            ps.key.delete()
+                            delete_count += 1
+
+                    raw_data.set_state(models.STATE_UNPARSED)
+                    raw_data.put()
+
+                    end_time = datetime.now()
+                    delta = end_time - start_time
+                    logging.info('Delete %d police station entities spend: %s sec' %
+                                 (delete_count, delta.total_seconds()))
+                else:
+                    logging.warning('Raw data is unparsed or in process, skip action now!')
+            else:
+                logging.warning('Can not find police stations raw data by this key!')
+        else:
+            logging.warning('No raw data key provided!')
 
 
 class ODPoliceStationsHandler(BaseHandler):
