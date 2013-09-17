@@ -120,6 +120,7 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                 if raw_data.get_state() == models.STATE_UNPARSED:
 
                     start_time = datetime.now()
+                    add_count = 0
 
                     raw_data.set_state(models.STATE_PROCESSING)
                     raw_data.put()
@@ -134,13 +135,14 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                         station.xy = [float(split[3]), float(split[4])]
                         station.latlng = ndb.GeoPt(lat=float(split[5]), lon=float(split[6]))
                         station.put()
+                        add_count += 1
 
                     raw_data.set_state(models.STATE_PARSED)
                     raw_data.put()
 
                     end_time = datetime.now()
                     delta = end_time - start_time
-                    logging.debug('Total spend time: %s sec' % delta.total_seconds())
+                    logging.info('Create %d police station entities spend: %s sec' % (add_count, delta.total_seconds()))
                 else:
                     logging.warning('Raw data is processing or was parsed, skip action now!')
             else:
