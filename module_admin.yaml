@@ -43,7 +43,7 @@ handlers:
   upload: static/robots\.txt
 
 - url: .*
-  script: admin.APP
+  script: app_admin.APP
   login: admin
 
 

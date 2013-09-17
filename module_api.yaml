@@ -19,7 +19,7 @@ handlers:
   upload: static/robots\.txt
 
 - url: /.*
-  script: api.APP
+  script: app_api.APP
 
 libraries:
 - name: webapp2

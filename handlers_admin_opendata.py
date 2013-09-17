@@ -34,8 +34,8 @@ from google.appengine.api.urlfetch_errors import DeadlineExceededError
 from google.appengine.ext import ndb
 
 # local imports
-from admin_base_handlers import BaseHandler
-import opendata_models as models
+from handlers_admin_base import BaseHandler
+import models_opendata as models
 
 
 ###########################################################################

@@ -22,7 +22,7 @@ import os
 import webapp2
 
 # local imports
-from process_handlers import routes as process_routes
+from handlers_process import routes as process_routes
 
 
 _debug = os.environ.get('SERVER_SOFTWARE').startswith('Dev')

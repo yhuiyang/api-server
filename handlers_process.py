@@ -28,7 +28,7 @@ from google.appengine.ext import blobstore
 from webapp2_extras.routes import RedirectRoute
 
 # local imports
-import opendata_models as models
+import models_opendata as models
 
 
 ###########################################################################

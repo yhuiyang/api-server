@@ -32,8 +32,8 @@ from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 
 # local imports
-import costco_models as models
-from admin_base_handlers import BaseHandler
+import models_costco as models
+from handlers_admin_base import BaseHandler
 
 
 ###########################################################################

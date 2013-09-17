@@ -22,13 +22,17 @@ import os
 import webapp2
 
 # local imports
-from api_costco_handlers import routes as costco_routes
+from handlers_admin_base import routes as base_routes
+from handlers_admin_costco import routes as costco_routes
+from handlers_admin_opendata import routes as opendata_routes
 
 
 _debug = os.environ.get('SERVER_SOFTWARE').startswith('Dev')
 _config = {}
 _routes = []
 
+_routes.extend(base_routes)
 _routes.extend(costco_routes)
+_routes.extend(opendata_routes)
 
 APP = webapp2.WSGIApplication(routes=_routes, config=_config, debug=_debug)

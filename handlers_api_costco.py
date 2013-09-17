@@ -26,7 +26,7 @@ from datetime import time
 import webapp2
 
 # local imports
-import costco_models as models
+import models_costco as models
 
 
 ###########################################################################
