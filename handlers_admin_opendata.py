@@ -203,7 +203,7 @@ class ODPoliceStationsHandler(BaseHandler):
             pager[0]['disabled'] = not websafe
             pager[0]['link'] = '?c=' + websafe + '&f=0' if websafe else '#'
             pager[1]['disabled'] = not more
-            pager[1]['link'] = '?c=' + ndb.Cursor.to_websafe_string(next_cursor) + '&f=1'
+            pager[1]['link'] = '?c=' + ndb.Cursor.to_websafe_string(next_cursor) + '&f=1' if more else '#'
         else:
             result_page, next_cursor, more = qry.fetch_page(self.PAGE_SIZE, end_cursor=cursor)
             pager[0]['disabled'] = not more
