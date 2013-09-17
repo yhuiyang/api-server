@@ -19,8 +19,7 @@
 # python imports
 import logging
 import json
-import urllib
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 # GAE imports
 import webapp2
@@ -28,9 +27,7 @@ from webapp2_extras.routes import RedirectRoute
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 from google.appengine.ext.blobstore import BlobInfo
-from google.appengine.api import modules
-from google.appengine.api import urlfetch
-from google.appengine.api.urlfetch_errors import DeadlineExceededError
+from google.appengine.api import background_thread
 from google.appengine.ext import ndb
 
 # local imports
@@ -100,20 +97,60 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
 
     def put(self):
 
-        # trigger process module to process data
-        process_module_host = modules.get_hostname('process')
-        url = 'http://' + process_module_host + '/opendata'
+        self.response.status_int = 200
 
-        fields = dict()
-        params = self.request.POST
-        for key, value in params.iteritems():
-            fields[key] = value
+        type = self.request.get('type')
+        if type == 'police_stations':
+            keySafe = self.request.get('keySafe')
+            action = self.request.get('action')
+            if action == 'populate':
+                background_thread.start_new_background_thread(
+                    self.parse_police_stations_raw_data_and_populate_into_datastore, [keySafe])
+            elif action == 'clean':
+                background_thread.start_new_background_thread(self.clean_up_police_stations_in_datastore)
+            else:
+                self.response.status_int = 400
+        else:
+            self.response.status_int = 400
 
-        try:
-            urlfetch.fetch(url=url, payload=urllib.urlencode(fields), method=urlfetch.PUT,
-                           headers={'Content-Type': 'application/x-www-form-urlencoded'})
-        except DeadlineExceededError:
-            logging.warning('Urlfetch (%s) timeout' % url)
+    def parse_police_stations_raw_data_and_populate_into_datastore(self, keySafe):
+        if keySafe:
+            raw_data = ndb.Key(urlsafe=keySafe).get()
+            if raw_data:
+                if raw_data.get_state() == models.STATE_UNPARSED:
+
+                    start_time = datetime.now()
+
+                    raw_data.set_state(models.STATE_PROCESSING)
+                    raw_data.put()
+
+                    reader = blobstore.BlobReader(raw_data.blob_key)
+                    for line in reader:
+                        split = line.split(',')
+                        station = models.PoliceStation()
+                        station.name = split[0]
+                        station.tel = split[1]
+                        station.address = split[2]
+                        station.xy = [float(split[3]), float(split[4])]
+                        station.latlng = ndb.GeoPt(lat=float(split[5]), lon=float(split[6]))
+                        station.put()
+
+                    raw_data.set_state(models.STATE_PARSED)
+                    raw_data.put()
+
+                    end_time = datetime.now()
+                    delta = end_time - start_time
+                    logging.debug('Total spend time: %s sec' % delta.total_seconds())
+                else:
+                    logging.warning('Raw data is processing or was parsed, skip action now!')
+            else:
+                logging.warning('Can not find police stations raw data by this key!')
+        else:
+            logging.warning('No raw data key provided!')
+
+    def clean_up_police_stations_in_datastore(self):
+
+        logging.debug('Clean up police stations')
 
 
 class ODPoliceStationsHandler(BaseHandler):
