@@ -27,7 +27,7 @@ from webapp2_extras.routes import RedirectRoute
 from google.appengine.ext import blobstore
 from google.appengine.ext.webapp import blobstore_handlers
 from google.appengine.ext.blobstore import BlobInfo
-from google.appengine.api import background_thread
+from google.appengine.api import runtime
 from google.appengine.ext import ndb
 
 # local imports
@@ -104,10 +104,9 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
             keySafe = self.request.get('keySafe')
             action = self.request.get('action')
             if action == 'populate':
-                background_thread.start_new_background_thread(
-                    self.parse_police_stations_raw_data_and_populate_into_datastore, [keySafe])
+                self.parse_police_stations_raw_data_and_populate_into_datastore(keySafe)
             elif action == 'clean':
-                background_thread.start_new_background_thread(self.clean_up_police_stations_in_datastore, [keySafe])
+                self.clean_up_police_stations_in_datastore(keySafe)
             else:
                 self.response.status_int = 400
         else:
@@ -127,6 +126,9 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
 
                     reader = blobstore.BlobReader(raw_data.blob_key)
                     for line in reader:
+                        if runtime.is_shutting_down():
+                            logging.warning('Shutting down early')
+                            break;
                         split = line.split(',')
                         station = models.PoliceStation()
                         station.name = split[0]
@@ -136,6 +138,8 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                         station.latlng = ndb.GeoPt(lat=float(split[5]), lon=float(split[6]))
                         station.put()
                         add_count += 1
+
+                    reader.close()
 
                     raw_data.set_state(models.STATE_PARSED)
                     raw_data.put()
@@ -165,9 +169,11 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                     raw_data.put()
 
                     qry = models.PoliceStation.query()
-                    while has_more:
+                    while has_more and not runtime.is_shutting_down():
                         result_page, next_cursor, has_more = qry.fetch_page(100, start_cursor=next_cursor)
                         for ps in result_page:
+                            if runtime.is_shutting_down():
+                                break
                             ps.key.delete()
                             delete_count += 1
 
