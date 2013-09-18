@@ -7,10 +7,10 @@
         padding-top: 60px;
     }
 }
-td.ps-parse-state.unparsed :first-child, td-ps-parse-state.processing :nth-child(2), td.ps-parse-state.parsed :nth-child(3) {
+td.ps-parse-state.unparsed button:first-child, td-ps-parse-state.processing div:nth-child(2), td.ps-parse-state.parsed button:nth-child(3) {
     display: inline;
 }
-td.ps-parse-state.processing :first-child, td.ps-parse-state.parsed :first-child, td.ps-parse-state.unparsed :nth-child(2), td.ps-parse-state.parsed :nth-child(2), td.ps-parse-state.unparsed :nth-child(3), td.ps-parse-state.processing :nth-child(3) {
+td.ps-parse-state.processing button:first-child, td.ps-parse-state.parsed button:first-child, td.ps-parse-state.unparsed div:nth-child(2), td.ps-parse-state.parsed div:nth-child(2), td.ps-parse-state.unparsed button:nth-child(3), td.ps-parse-state.processing button:nth-child(3) {
     display: none;
 }
 </style>
@@ -62,7 +62,7 @@ td.ps-parse-state.processing :first-child, td.ps-parse-state.parsed :first-child
                         <td>{{ ps['uploadDatetime'] }}</td>
                         <td class="ps-parse-state {{ ps['parse_state'] }}">
                             <button id="idBtnParsePoliceStationRawData" class="btn btn-danger">Parse and Populate</button>
-                            <span>Processing..., please wait and come back later.</span>
+                            <div>Processing..., please wait. <span>0</span> seconds passed.</div>
                             <button id="idBtnCleanPoliceStationRawData" class="btn btn-warning">Clean up</button>
                         </td>
                     </tr>
@@ -102,9 +102,11 @@ $('#idBtnParsePoliceStationRawData').on('click', function() {
     var td = $(this).closest('td');
     var keySafe = tr.attr('id');
     var myself = $(this);
+    var spend_time_span = this.nextElementSibling.firstElementChild;
 
     $(this).prop('disabled', true);
     td.removeClass('unparsed').addClass('processing');
+    var timer_id = setInterval(increase_span_number, 1000, spend_time_span, 1);
     $.ajax({
         url: '/opendata',
         type: 'PUT',
@@ -119,6 +121,8 @@ $('#idBtnParsePoliceStationRawData').on('click', function() {
         td.removeClass('processing').addClass('unparsed');
     }).always(function() {
         myself.prop('disabled', false);
+        clearInterval(timer_id);
+        spend_time_span.innerText = 0;
     });
 });
 $('#idBtnCleanPoliceStationRawData').on('click', function() {
@@ -126,9 +130,11 @@ $('#idBtnCleanPoliceStationRawData').on('click', function() {
     var td = $(this).closest('td');
     var keySafe = tr.attr('id');
     var myself = $(this);
+    var spend_time_span = this.previousElementSibling.firstElementChild;
 
     $(this).prop('disabled', true);
     td.removeClass('parsed').addClass('processing');
+    var timer_id = setInterval(increase_span_number, 1000, spend_time_span, 1);
     $.ajax({
         url: '/opendata',
         type: 'PUT',
@@ -143,7 +149,12 @@ $('#idBtnCleanPoliceStationRawData').on('click', function() {
         td.removeClass('processing').addClass('parsed');
     }).always(function() {
         myself.prop('disabled', false);
+        clearInterval(timer_id);
+        spend_time_span.innerText = 0;
     });
 });
+function increase_span_number(span, inc) {
+    span.innerText = parseInt(span.innerText) + inc;
+}
 </script>
 {% endblock mediaJS %}
