@@ -36,6 +36,16 @@ import models_opendata as models
 
 
 ###########################################################################
+# Check runtime resource usage
+###########################################################################
+def check_runtime_usage():
+    cpu = runtime.cpu_usage()
+    logging.debug('[CPU] Total: %f, Avg 1m: %f, Avg 10m: %f' % (cpu.total(), cpu.rate1m(), cpu.rate10m()))
+    mem = runtime.memory_usage()
+    logging.debug('[MEM] Current: %f, Avg 1m: %f, Avg 10m: %f' % (mem.current(), mem.average1m(), mem.average10m()))
+
+
+###########################################################################
 # Open data
 ###########################################################################
 class ODGetUploadUrl(webapp2.RequestHandler):
@@ -104,15 +114,18 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
             keySafe = self.request.get('keySafe')
             action = self.request.get('action')
             if action == 'populate':
-                self.parse_police_stations_raw_data_and_populate_into_datastore(keySafe)
+                self.response.status_int = self.parse_police_stations_raw_data_and_populate_into_datastore(keySafe)
             elif action == 'clean':
-                self.clean_up_police_stations_in_datastore(keySafe)
+                self.response.status_int = self.clean_up_police_stations_in_datastore(keySafe)
             else:
                 self.response.status_int = 400
         else:
             self.response.status_int = 400
 
     def parse_police_stations_raw_data_and_populate_into_datastore(self, keySafe):
+
+        status_int = 200
+
         if keySafe:
             raw_data = ndb.Key(urlsafe=keySafe).get()
             if raw_data:
@@ -128,7 +141,9 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                     for line in reader:
                         if runtime.is_shutting_down():
                             logging.warning('Shutting down early')
-                            break;
+                            status_int = 503  # service unavailable
+                            check_runtime_usage()
+                            break
                         split = line.split(',')
                         station = models.PoliceStation()
                         station.name = split[0]
@@ -141,7 +156,10 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
 
                     reader.close()
 
-                    raw_data.set_state(models.STATE_PARSED)
+                    if status_int == 200:
+                        raw_data.set_state(models.STATE_PARSED)
+                    else:
+                        raw_data.set_state(models.STATE_UNPARSED)
                     raw_data.put()
 
                     end_time = datetime.now()
@@ -149,12 +167,18 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                     logging.info('Create %d police station entities spend: %s sec' % (add_count, delta.total_seconds()))
                 else:
                     logging.warning('Raw data is processing or was parsed, skip action now!')
+                    status_int = 409  # conflict
             else:
                 logging.warning('Can not find police stations raw data by this key!')
+                status_int = 410  # gone
         else:
             logging.warning('No raw data key provided!')
+            status_int = 400  # bad request
+        return status_int
 
     def clean_up_police_stations_in_datastore(self, keySafe):
+
+        status_int = 200
 
         if keySafe:
             raw_data = ndb.Key(urlsafe=keySafe).get()
@@ -173,11 +197,16 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                         result_page, next_cursor, has_more = qry.fetch_page(100, start_cursor=next_cursor)
                         for ps in result_page:
                             if runtime.is_shutting_down():
+                                status_int = 503  # service unavailable
+                                check_runtime_usage()
                                 break
                             ps.key.delete()
                             delete_count += 1
 
-                    raw_data.set_state(models.STATE_UNPARSED)
+                    if status_int == 200:
+                        raw_data.set_state(models.STATE_UNPARSED)
+                    else:
+                        raw_data.set_state(models.STATE_PARSED)
                     raw_data.put()
 
                     end_time = datetime.now()
@@ -186,10 +215,14 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                                  (delete_count, delta.total_seconds()))
                 else:
                     logging.warning('Raw data is unparsed or in process, skip action now!')
+                    status_int = 409  # conflict
             else:
                 logging.warning('Can not find police stations raw data by this key!')
+                status_int = 410  # gone
         else:
             logging.warning('No raw data key provided!')
+            status_int = 400  # bad request
+        return status_int
 
 
 class ODPoliceStationsHandler(BaseHandler):

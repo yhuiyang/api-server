@@ -104,6 +104,7 @@ $('#idBtnParsePoliceStationRawData').on('click', function() {
     var myself = $(this);
 
     $(this).prop('disabled', true);
+    td.removeClass('unparsed').addClass('processing');
     $.ajax({
         url: '/opendata',
         type: 'PUT',
@@ -113,8 +114,9 @@ $('#idBtnParsePoliceStationRawData').on('click', function() {
             action: 'populate'
         }
     }).done(function() {
-        td.removeClass('unparsed').addClass('processing');
+        td.removeClass('processing').addClass('parsed');
     }).fail(function() {
+        td.removeClass('processing').addClass('unparsed');
     }).always(function() {
         myself.prop('disabled', false);
     });
@@ -126,6 +128,7 @@ $('#idBtnCleanPoliceStationRawData').on('click', function() {
     var myself = $(this);
 
     $(this).prop('disabled', true);
+    td.removeClass('parsed').addClass('processing');
     $.ajax({
         url: '/opendata',
         type: 'PUT',
@@ -135,8 +138,9 @@ $('#idBtnCleanPoliceStationRawData').on('click', function() {
             action: 'clean'
         }
     }).done(function() {
-        td.removeClass('parsed').addClass('processing');
+        td.removeClass('processing').addClass('unparsed');
     }).fail(function() {
+        td.removeClass('processing').addClass('parsed');
     }).always(function() {
         myself.prop('disabled', false);
     });
