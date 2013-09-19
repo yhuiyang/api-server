@@ -60,4 +60,7 @@ class PoliceStation(ndb.Model):
     address = ndb.StringProperty(indexed=False)
     xy = ndb.FloatProperty(indexed=False, repeated=True)
     latlng = ndb.GeoPtProperty(indexed=False)
-    data_source_date = ndb.DateProperty(name='date', required=True)
+
+    @classmethod
+    def query_entities(cls, data_date):  # data_date is str like '2013-9-19'. It can get from date.isoformat().
+        return cls.query(ancestor=ndb.Key(PoliceStation, data_date))

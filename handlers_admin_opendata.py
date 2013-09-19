@@ -132,28 +132,35 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                 if raw_data.get_state() == models.PoliceStationRawData.STATE_UNPARSED:
 
                     start_time = datetime.now()
-                    add_count = 0
 
                     raw_data.set_state(models.PoliceStationRawData.STATE_PROCESSING)
                     raw_data.put()
 
                     reader = blobstore.BlobReader(raw_data.blob_key)
-                    for line in reader:
-                        if runtime.is_shutting_down():
-                            logging.warning('Shutting down early')
-                            status_int = 503  # service unavailable
-                            check_runtime_usage()
-                            break
-                        split = line.split(',')
-                        station = models.PoliceStation()
-                        station.name = split[0]
-                        station.tel = split[1]
-                        station.address = split[2]
-                        station.xy = [float(split[3]), float(split[4])]
-                        station.latlng = ndb.GeoPt(lat=float(split[5]), lon=float(split[6]))
-                        station.data_source_date = raw_data.date
-                        station.put()
-                        add_count += 1
+
+                    @ndb.transactional
+                    def populate(reader):
+                        loop_count = 0
+                        dummyGroupKey = ndb.Key(models.PoliceStation, raw_data.date.isoformat())
+                        for line in reader:
+                            if runtime.is_shutting_down():
+                                return False, 0
+                            split = line.split(',')
+                            station = models.PoliceStation(parent=dummyGroupKey)
+                            station.name = split[0]
+                            station.tel = split[1]
+                            station.address = split[2]
+                            station.xy = [float(split[3]), float(split[4])]
+                            station.latlng = ndb.GeoPt(lat=float(split[5]), lon=float(split[6]))
+                            station.put()
+                            loop_count += 1
+                        return True, loop_count
+
+                    result, add_count = populate(reader)
+                    if not result:
+                        logging.warning('Shutting down early!')
+                        status_int = 503  # service unavailable
+                        check_runtime_usage()
 
                     reader.close()
 
@@ -185,24 +192,32 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
             raw_data = ndb.Key(urlsafe=keySafe).get()
             if raw_data:
                 if raw_data.get_state() == models.PoliceStationRawData.STATE_PARSED:
+
                     start_time = datetime.now()
-                    delete_count = 0
-                    has_more = True
-                    next_cursor = None
 
                     raw_data.set_state(models.PoliceStationRawData.STATE_PROCESSING)
                     raw_data.put()
 
-                    qry = models.PoliceStation.query(models.PoliceStation.data_source_date == raw_data.date)
-                    while has_more and not runtime.is_shutting_down():
-                        result_page, next_cursor, has_more = qry.fetch_page(100, start_cursor=next_cursor)
-                        for ps in result_page:
-                            if runtime.is_shutting_down():
-                                status_int = 503  # service unavailable
-                                check_runtime_usage()
-                                break
-                            ps.key.delete()
-                            delete_count += 1
+                    @ndb.transactional
+                    def cleanup():
+                        has_more = True
+                        next_cursor = None
+                        loop_count = 0
+                        qry = models.PoliceStation.query_entities(raw_data.date.isoformat())
+                        while has_more:
+                            result_page, next_cursor, has_more = qry.fetch_page(100, start_cursor=next_cursor)
+                            for ps in result_page:
+                                if runtime.is_shutting_down():
+                                    return False, 0
+                                ps.key.delete()
+                                loop_count += 1
+                        return True, loop_count
+
+                    result, delete_count = cleanup()
+                    if not result:
+                        logging.warning('Shutting down early!')
+                        status_int = 503  # service unavailable
+                        check_runtime_usage()
 
                     if status_int == 200:
                         raw_data.set_state(models.PoliceStationRawData.STATE_UNPARSED)
@@ -237,11 +252,9 @@ class ODPoliceStationsHandler(BaseHandler):
         logging.debug('c=%s, f=%s' % (websafe, forward))
 
         data_date = self.request.get('d', default_value=None)
-        if data_date:
-            dy, dm, dd = data_date.split('-')
-            qry = models.PoliceStation.query(models.PoliceStation.data_source_date == date(int(dy), int(dm), int(dd)))
-        else:
-            qry = models.PoliceStation.query()
+        if not data_date:
+            data_date = date.today().isoformat()
+        qry = models.PoliceStation.query_entities(data_date)
         cursor = ndb.Cursor.from_websafe_string(websafe) if websafe else None
         logging.debug(cursor)
         pager = [dict(), dict()]
