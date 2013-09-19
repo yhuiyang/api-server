@@ -55,8 +55,9 @@ class PoliceStationRawData(ndb.Model):
 
 
 class PoliceStation(ndb.Model):
-    name = ndb.StringProperty(indexed=False)
+    name = ndb.StringProperty(indexed=False, required=True)
     tel = ndb.StringProperty(indexed=False)
     address = ndb.StringProperty(indexed=False)
     xy = ndb.FloatProperty(indexed=False, repeated=True)
     latlng = ndb.GeoPtProperty(indexed=False)
+    data_source_date = ndb.DateProperty(name='date', required=True)

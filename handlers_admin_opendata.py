@@ -151,6 +151,7 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                         station.address = split[2]
                         station.xy = [float(split[3]), float(split[4])]
                         station.latlng = ndb.GeoPt(lat=float(split[5]), lon=float(split[6]))
+                        station.data_source_date = raw_data.date
                         station.put()
                         add_count += 1
 
@@ -235,7 +236,12 @@ class ODPoliceStationsHandler(BaseHandler):
         forward = True if self.request.get('f', default_value='1') == '1' else False
         logging.debug('c=%s, f=%s' % (websafe, forward))
 
-        qry = models.PoliceStation.query()
+        data_date = self.request.get('d', default_value=None)
+        if data_date:
+            dy, dm, dd = data_date.split('-')
+            qry = models.PoliceStation.query(models.PoliceStation.data_source_date == date(int(dy), int(dm), int(dd)))
+        else:
+            qry = models.PoliceStation.query()
         cursor = ndb.Cursor.from_websafe_string(websafe) if websafe else None
         logging.debug(cursor)
         pager = [dict(), dict()]
