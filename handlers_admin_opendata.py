@@ -129,12 +129,12 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         if keySafe:
             raw_data = ndb.Key(urlsafe=keySafe).get()
             if raw_data:
-                if raw_data.get_state() == models.STATE_UNPARSED:
+                if raw_data.get_state() == models.PoliceStationRawData.STATE_UNPARSED:
 
                     start_time = datetime.now()
                     add_count = 0
 
-                    raw_data.set_state(models.STATE_PROCESSING)
+                    raw_data.set_state(models.PoliceStationRawData.STATE_PROCESSING)
                     raw_data.put()
 
                     reader = blobstore.BlobReader(raw_data.blob_key)
@@ -158,9 +158,9 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                     reader.close()
 
                     if status_int == 200:
-                        raw_data.set_state(models.STATE_PARSED)
+                        raw_data.set_state(models.PoliceStationRawData.STATE_PARSED)
                     else:
-                        raw_data.set_state(models.STATE_UNPARSED)
+                        raw_data.set_state(models.PoliceStationRawData.STATE_UNPARSED)
                     raw_data.put()
 
                     end_time = datetime.now()
@@ -184,13 +184,13 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
         if keySafe:
             raw_data = ndb.Key(urlsafe=keySafe).get()
             if raw_data:
-                if raw_data.get_state() == models.STATE_PARSED:
+                if raw_data.get_state() == models.PoliceStationRawData.STATE_PARSED:
                     start_time = datetime.now()
                     delete_count = 0
                     has_more = True
                     next_cursor = None
 
-                    raw_data.set_state(models.STATE_PROCESSING)
+                    raw_data.set_state(models.PoliceStationRawData.STATE_PROCESSING)
                     raw_data.put()
 
                     qry = models.PoliceStation.query()
@@ -205,9 +205,9 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                             delete_count += 1
 
                     if status_int == 200:
-                        raw_data.set_state(models.STATE_UNPARSED)
+                        raw_data.set_state(models.PoliceStationRawData.STATE_UNPARSED)
                     else:
-                        raw_data.set_state(models.STATE_PARSED)
+                        raw_data.set_state(models.PoliceStationRawData.STATE_PARSED)
                     raw_data.put()
 
                     end_time = datetime.now()

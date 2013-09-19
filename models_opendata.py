@@ -27,28 +27,28 @@ from google.appengine.ext import ndb
 ###########################################################################
 # Police Stations
 ###########################################################################
-STATE_UNPARSED = 'unparsed'
-STATE_PROCESSING = 'processing'
-STATE_PARSED = 'parsed'
-
-
 class PoliceStationRawData(ndb.Model):
+
+    STATE_UNPARSED = 'unparsed'
+    STATE_PROCESSING = 'processing'
+    STATE_PARSED = 'parsed'
+
     date = ndb.DateProperty(indexed=False, required=True)
     blob_key = ndb.BlobKeyProperty(indexed=False, required=True)
     state = ndb.IntegerProperty(indexed=False, default=0)
 
     def get_state(self):
         if self.state == 0:
-            return STATE_UNPARSED
+            return self.STATE_UNPARSED
         elif self.state == 1:
-            return STATE_PROCESSING
+            return self.STATE_PROCESSING
         else:
-            return STATE_PARSED
+            return self.STATE_PARSED
 
     def set_state(self, state):
-        if state == STATE_UNPARSED:
+        if state == self.STATE_UNPARSED:
             self.state = 0
-        elif state == STATE_PROCESSING:
+        elif state == self.STATE_PROCESSING:
             self.state = 1
         else:
             self.state = 2
