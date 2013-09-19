@@ -193,7 +193,7 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
                     raw_data.set_state(models.PoliceStationRawData.STATE_PROCESSING)
                     raw_data.put()
 
-                    qry = models.PoliceStation.query()
+                    qry = models.PoliceStation.query(models.PoliceStation.data_source_date == raw_data.date)
                     while has_more and not runtime.is_shutting_down():
                         result_page, next_cursor, has_more = qry.fetch_page(100, start_cursor=next_cursor)
                         for ps in result_page:
