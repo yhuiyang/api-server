@@ -23,6 +23,7 @@ import webapp2
 
 # local imports
 from handlers_api_costco import routes as costco_routes
+from handlers_api_opendata import routes as opendata_routes
 
 
 _debug = os.environ.get('SERVER_SOFTWARE').startswith('Dev')
@@ -30,5 +31,6 @@ _config = {}
 _routes = []
 
 _routes.extend(costco_routes)
+_routes.extend(opendata_routes)
 
 APP = webapp2.WSGIApplication(routes=_routes, config=_config, debug=_debug)
