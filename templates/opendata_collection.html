@@ -63,11 +63,11 @@ td.ps-parse-state.processing button:first-child, td.ps-parse-state.parsed button
                         <td>{{ ps['datadate'] }}</td>
                         <td>{{ ps['uploadDatetime'] }}</td>
                         <td class="ps-parse-state {{ ps['parse_state'] }}">
-                            <button id="idBtnParsePoliceStationRawData" class="btn btn-danger">Parse and Populate</button>
+                            <button class="clsBtnParsePoliceStationRawData btn btn-danger">Parse and Populate</button>
                             <div>Processing..., please wait. <span>0</span> seconds passed.</div>
-                            <button id="idBtnCleanPoliceStationRawData" class="btn btn-warning">Clean up</button>
+                            <button class="clsBtnCleanPoliceStationRawData btn btn-warning">Clean up</button>
                             <a href="/opendata/police_stations?d={{ ps['datadate'] }}" class="btn btn-primary">Show populated data</a>
-                            <button id="idBtnPoliceStationTogglePublishState" class="btn btn-success"><span>{{ str_toggle_publish(ps['published']) }}</span></button>
+                            <button class="clsBtnPoliceStationTogglePublishState btn btn-success"><span>{{ str_toggle_publish(ps['published']) }}</span></button>
                         </td>
                     </tr>
                 {% endfor %}
@@ -101,7 +101,7 @@ $('#idBtnUploadPoliceStationsRawData').on('click', function() {
         myself.removeAttr('disabled');
     });
 });
-$('#idBtnParsePoliceStationRawData').on('click', function() {
+$('.clsBtnParsePoliceStationRawData').on('click', function() {
     var tr = $(this).closest('tr');
     var td = $(this).closest('td');
     var keySafe = tr.attr('id');
@@ -129,7 +129,7 @@ $('#idBtnParsePoliceStationRawData').on('click', function() {
         spend_time_span.innerText = 0;
     });
 });
-$('#idBtnCleanPoliceStationRawData').on('click', function() {
+$('.clsBtnCleanPoliceStationRawData').on('click', function() {
     var tr = $(this).closest('tr');
     var td = $(this).closest('td');
     var keySafe = tr.attr('id');
@@ -160,7 +160,7 @@ $('#idBtnCleanPoliceStationRawData').on('click', function() {
 function increase_span_number(span, inc) {
     span.innerText = parseInt(span.innerText) + inc;
 }
-$('#idBtnPoliceStationTogglePublishState').on('click', function(){
+$('.clsBtnPoliceStationTogglePublishState').on('click', function(){
 
     var myself = $(this);
     var tr = $(this).closest('tr');
