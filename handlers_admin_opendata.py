@@ -313,7 +313,7 @@ class ODPoliceStationsHandler(BaseHandler):
                         ps['tel'] = p.tel
                         ps['address'] = p.address
                         ps['geo'] = p.latlng.__unicode__()
-                    list.append(ps)
+                        list.append(ps)
                 entity.list = list
                 raw_data.published = True
                 mgr.published_data_date.append(raw_data.date)
