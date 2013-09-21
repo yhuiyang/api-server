@@ -7,10 +7,10 @@
         padding-top: 60px;
     }
 }
-td.ps-parse-state.unparsed button:first-child, td-ps-parse-state.processing div:nth-child(2), td.ps-parse-state.parsed button:nth-child(3), td.ps-parse-state.parsed a:nth-child(4) {
+td.ps-parse-state.unparsed button:first-child, td-ps-parse-state.processing div:nth-child(2), td.ps-parse-state.parsed button:nth-child(3), td.ps-parse-state.parsed a:nth-child(4), td.ps-parse-state.parsed button:nth-child(5) {
     display: inline;
 }
-td.ps-parse-state.processing button:first-child, td.ps-parse-state.parsed button:first-child, td.ps-parse-state.unparsed div:nth-child(2), td.ps-parse-state.parsed div:nth-child(2), td.ps-parse-state.unparsed button:nth-child(3), td.ps-parse-state.processing button:nth-child(3), td.ps-parse-state.unparsed a:nth-child(4), td.ps-parse-state.processing a:nth-child(4) {
+td.ps-parse-state.processing button:first-child, td.ps-parse-state.parsed button:first-child, td.ps-parse-state.unparsed div:nth-child(2), td.ps-parse-state.parsed div:nth-child(2), td.ps-parse-state.unparsed button:nth-child(3), td.ps-parse-state.processing button:nth-child(3), td.ps-parse-state.unparsed a:nth-child(4), td.ps-parse-state.processing a:nth-child(4), td.ps-parse-state.unparsed button:nth-child(4), td.ps-parse-state.processing button:nth-child(4) {
     display: none;
 }
 </style>
@@ -23,6 +23,8 @@ td.ps-parse-state.processing button:first-child, td.ps-parse-state.parsed button
     </div>
 </li>
 {% endblock navbar_list_items %}
+
+{% macro str_toggle_publish(published=True) %}{% if published %}Unpublish{% else %}Publish{% endif %}{% endmacro %}
 
 {% block content %}
 <div class="tabbable tabs-left">
@@ -65,6 +67,7 @@ td.ps-parse-state.processing button:first-child, td.ps-parse-state.parsed button
                             <div>Processing..., please wait. <span>0</span> seconds passed.</div>
                             <button id="idBtnCleanPoliceStationRawData" class="btn btn-warning">Clean up</button>
                             <a href="/opendata/police_stations?d={{ ps['datadate'] }}" class="btn btn-primary">Show populated data</a>
+                            <button id="idBtnPoliceStationTogglePublishState" class="btn btn-success"><span>{{ str_toggle_publish(ps['published']) }}</span></button>
                         </td>
                     </tr>
                 {% endfor %}
@@ -157,5 +160,36 @@ $('#idBtnCleanPoliceStationRawData').on('click', function() {
 function increase_span_number(span, inc) {
     span.innerText = parseInt(span.innerText) + inc;
 }
+$('#idBtnPoliceStationTogglePublishState').on('click', function(){
+
+    var myself = $(this);
+    var tr = $(this).closest('tr');
+    var keySafe = tr.attr('id');
+    var text_span = this.firstElementChild;
+    var action;
+
+    if (text_span.innerText == '{{ str_toggle_publish(True) }}')
+        action = 'unpublish';
+    else
+        action = 'publish'
+
+    $(this).prop('disabled', true);
+    $.ajax({
+        url: '/opendata/police_stations',
+        type: 'PUT',
+        data: {
+            action: action,
+            keySafe: keySafe
+        }
+    }).done(function() {
+        if (action == 'publish')
+            text_span.innerText = '{{ str_toggle_publish(True) }}';
+        else
+            text_span.innerText = '{{ str_toggle_publish(False) }}';
+    }).fail(function() {
+    }).always(function() {
+        myself.prop('disabled', false);
+    });
+});
 </script>
 {% endblock mediaJS %}

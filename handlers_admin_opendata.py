@@ -77,6 +77,7 @@ class ODCollectionHandler(BaseHandler, blobstore_handlers.BlobstoreUploadHandler
             ps['datadate'] = q.date
             ps['parse_state'] = q.get_state()
             ps['keySafe'] = q.key.urlsafe()
+            ps['published'] = q.published
             ps_list.append(ps)
 
         params = {
@@ -277,6 +278,71 @@ class ODPoliceStationsHandler(BaseHandler):
             'p': pager,
         }
         self.render_response('opendata_police_stations.html', **params)
+
+    def put(self):
+
+        keysafe = self.request.get('keySafe')
+        action = self.request.get('action')
+        if action == 'publish':
+            self.response.status_int = self.publish_police_stations(keysafe)
+        elif action == 'unpublish':
+            self.unpublish_police_stations(keysafe)
+        else:
+            self.response.status_int = self.response.status_int = 400  # bad request
+
+    def publish_police_stations(self, keysafe):
+
+        status_int = 200
+
+        raw_data = ndb.Key(urlsafe=keysafe).get()
+        if raw_data:
+            mgr = models.PoliceStationManager.getInstance()
+            if not raw_data.published and raw_data.get_state() == models.PoliceStationRawData.STATE_PARSED \
+                    and raw_data.date not in mgr.published_data_date:
+                data_date = raw_data.date.isoformat()
+                entity = models.PublishedPoliceStations(id=data_date)
+                qry = models.PoliceStation.query_entities(data_date)
+                cursor = None
+                more = True
+                list = []
+                while more:
+                    ps = dict()
+                    page, cursor, more = qry.fetch_page(100, start_cursor=cursor)
+                    for p in page:
+                        ps['name'] = p.name
+                        ps['tel'] = p.tel
+                        ps['address'] = p.address
+                        ps['geo'] = p.latlng.__unicode__()
+                    list.append(ps)
+                entity.list = list
+                raw_data.published = True
+                mgr.published_data_date.append(raw_data.date)
+                mgr.published_data_date.sort(reverse=True)
+                ndb.put_multi([entity, raw_data, mgr])
+        else:
+            status_int = 410  # gone
+
+        return status_int
+
+    def unpublish_police_stations(self, keysafe):
+
+        status_int = 200
+
+        raw_data = ndb.Key(urlsafe=keysafe).get()
+        if raw_data:
+            mgr = models.PoliceStationManager.getInstance()
+            if raw_data.published and raw_data.get_state() == models.PoliceStationRawData.STATE_PARSED \
+                    and raw_data.date in mgr.published_data_date:
+                data_date = raw_data.date.isoformat()
+                published_police_stations_entity_key = ndb.Key(models.PublishedPoliceStations, data_date)
+                published_police_stations_entity_key.delete()
+                raw_data.published = False
+                mgr.published_data_date.remove(raw_data.date)
+                ndb.put_multi([raw_data, mgr])
+        else:
+            status_int = 410  # gone
+
+        return status_int
 
 
 ###########################################################################

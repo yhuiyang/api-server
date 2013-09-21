@@ -36,6 +36,7 @@ class PoliceStationRawData(ndb.Model):
     date = ndb.DateProperty(indexed=False, required=True)
     blob_key = ndb.BlobKeyProperty(indexed=False, required=True)
     state = ndb.IntegerProperty(indexed=False, default=0)
+    published = ndb.BooleanProperty(indexed=False, default=False)
 
     def get_state(self):
         if self.state == 0:
@@ -64,3 +65,15 @@ class PoliceStation(ndb.Model):
     @classmethod
     def query_entities(cls, data_date):  # data_date is str like '2013-9-19'. It can get from date.isoformat().
         return cls.query(ancestor=ndb.Key(PoliceStation, data_date))
+
+
+class PublishedPoliceStations(ndb.Model):
+    list = ndb.JsonProperty(indexed=False, required=True)
+
+
+class PoliceStationManager(ndb.Model):
+    published_data_date = ndb.DateProperty(indexed=False, repeated=True)
+
+    @classmethod
+    def getInstance(cls):
+        return cls.get_or_insert('PoliceStationMgr', published_data_date=list())
