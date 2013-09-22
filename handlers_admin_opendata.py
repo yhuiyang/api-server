@@ -286,9 +286,9 @@ class ODPoliceStationsHandler(BaseHandler):
         if action == 'publish':
             self.response.status_int = self.publish_police_stations(keysafe)
         elif action == 'unpublish':
-            self.unpublish_police_stations(keysafe)
+            self.response.status_int = self.unpublish_police_stations(keysafe)
         else:
-            self.response.status_int = self.response.status_int = 400  # bad request
+            self.response.status_int = 400  # bad request
 
     def publish_police_stations(self, keysafe):
 
@@ -306,9 +306,9 @@ class ODPoliceStationsHandler(BaseHandler):
                 more = True
                 list = []
                 while more:
-                    ps = dict()
                     page, cursor, more = qry.fetch_page(100, start_cursor=cursor)
                     for p in page:
+                        ps = dict()
                         ps['name'] = p.name
                         ps['tel'] = p.tel
                         ps['address'] = p.address
