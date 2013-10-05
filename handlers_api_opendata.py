@@ -37,25 +37,30 @@ class ApiPublishedPoliceStations(webapp2.RequestHandler):
 
         self.response.content_type = 'application/json'
 
+        # fill dummy info
+        output = dict()
+        output['date'] = '1970-01-01'
+        output['data'] = []
+
         mgr = models.PoliceStationManager.getInstance()
         if len(mgr.published_data_date) == 0:
-            self.response.body = json.dumps([], indent=None, separators=(',', ':'))
+            self.response.body = json.dumps(output, indent=None, separators=(',', ':'))
             return
 
         client_data_date_str = self.request.get('d')
         latest_data_date = mgr.published_data_date[0]
         if not client_data_date_str:
-            output = models.PublishedPoliceStations.get_by_id(latest_data_date.isoformat()).list
+            output['date'] = latest_data_date.isoformat()
+            output['data'] = models.PublishedPoliceStations.get_by_id(latest_data_date.isoformat()).list
         else:
             try:
                 cy, cm, cd = client_data_date_str.split('-')
                 client_data_date = date(int(cy), int(cm), int(cd))
                 if latest_data_date > client_data_date:
-                    output = models.PublishedPoliceStations.get_by_id(latest_data_date.isoformat()).list
-                else:
-                    output = []
+                    output['data'] = models.PublishedPoliceStations.get_by_id(latest_data_date.isoformat()).list
+                output['date'] = latest_data_date.isoformat()
             except ValueError:
-                output = []
+                pass
 
         self.response.body = json.dumps(output, indent=None, separators=(',', ':'))
 
