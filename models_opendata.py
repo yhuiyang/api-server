@@ -17,6 +17,7 @@
 #
 
 # python imports
+import datetime
 
 # GAE imports
 from google.appengine.ext import ndb
@@ -29,51 +30,67 @@ from google.appengine.ext import ndb
 ###########################################################################
 class PoliceStationRawData(ndb.Model):
 
-    STATE_UNPARSED = 'unparsed'
+    STATE_INITIAL = 'initial'
+    STATE_POPULATED = 'populated'
+    STATE_PUBLISHED = "published"
     STATE_PROCESSING = 'processing'
-    STATE_PARSED = 'parsed'
 
-    date = ndb.DateProperty(indexed=False, required=True)
+    date = ndb.DateProperty(required=True)
+    rev = ndb.IntegerProperty(indexed=False, required=True)
     blob_key = ndb.BlobKeyProperty(indexed=False, required=True)
-    state = ndb.IntegerProperty(indexed=False, default=0)
-    published = ndb.BooleanProperty(indexed=False, default=False)
+    state = ndb.StringProperty(indexed=False, default=STATE_INITIAL)
 
-    def get_state(self):
-        if self.state == 0:
-            return self.STATE_UNPARSED
-        elif self.state == 1:
-            return self.STATE_PROCESSING
+    @classmethod
+    def get_count(cls, date=None):
+        if date:
+            cnt = cls.query(cls.date == date).count(keys_only=True)
         else:
-            return self.STATE_PARSED
-
-    def set_state(self, state):
-        if state == self.STATE_UNPARSED:
-            self.state = 0
-        elif state == self.STATE_PROCESSING:
-            self.state = 1
-        else:
-            self.state = 2
+            cnt = cls.query().count(keys_only=True)
+        return cnt
 
 
 class PoliceStation(ndb.Model):
     name = ndb.StringProperty(indexed=False, required=True)
     tel = ndb.StringProperty(indexed=False)
     address = ndb.StringProperty(indexed=False)
+    county = ndb.StringProperty(indexed=False)
+    township = ndb.StringProperty(indexed=False)
     xy = ndb.FloatProperty(indexed=False, repeated=True)
     latlng = ndb.GeoPtProperty(indexed=False)
 
     @classmethod
-    def query_entities(cls, data_date):  # data_date is str like '2013-9-19'. It can get from date.isoformat().
-        return cls.query(ancestor=ndb.Key(PoliceStation, data_date))
+    def query_entities(cls, date, rev):  # date is str like '2013-09-19'. It can get from date.isoformat().
+        if isinstance(date, datetime.date):
+            strId = date.isoformat() + 'r' + str(rev)
+        else:
+            strId = date + 'r' + str(rev)
+        return cls.query(ancestor=ndb.Key(PoliceStation, strId))
 
 
 class PublishedPoliceStations(ndb.Model):
     list = ndb.JsonProperty(indexed=False, required=True)
 
 
+class PublishedPSMeta(ndb.Model):
+    time = ndb.DateTimeProperty(auto_now_add=True)  # published datetime
+    date = ndb.DateProperty(required=True)  # data date
+    rev = ndb.IntegerProperty(required=True)
+
+
 class PoliceStationManager(ndb.Model):
-    published_data_date = ndb.DateProperty(indexed=False, repeated=True)
+    meta_list = ndb.LocalStructuredProperty(PublishedPSMeta, repeated=True)
 
     @classmethod
     def getInstance(cls):
-        return cls.get_or_insert('PoliceStationMgr', published_data_date=list())
+        return cls.get_or_insert('PoliceStationMgr', meta_list=list())
+
+    def getLatestDateAndRevision(self, default_date, default_rev):
+        latest_date = default_date
+        latest_rev = default_rev
+        for meta in self.meta_list:
+            if meta.date > latest_date:
+                latest_date = meta.date
+                latest_rev = meta.rev
+            elif meta.date == latest_date and meta.rev > latest_rev:
+                latest_rev = meta.rev
+        return latest_date, latest_rev

@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block mediaCSS %}
+<style type="text/css">
+@media (min-width: 981px) {
+    body {
+        padding-top: 60px;
+    }
+}
+td.state.initial button.clsBtnPopulate {
+    display: inline;
+}
+td.state.initial button.clsBtnPublish, td.state.initial a.clsAPreview, td.state.initial a.clsAView, td.state.initial div {
+    display: none;
+}
+td.state.populated button.clsBtnPublish, td.state.populated a.clsAPreview {
+    display: inline;
+}
+td.state.populated button.clsBtnPopulate, td.state.populated a.clsAView, td.state.populated div {
+    display: none;
+}
+td.state.published a.clsAView {
+    display: inline;
+}
+td.state.published button.clsBtnPopulate, td.state.published button.clsBtnPublish, td.state.published a.clsAPreview, td.state.published div {
+    display: none;
+}
+td.state.processing div {
+    display: inline;
+}
+td.state.processing button.clsBtnPopulate, td.state.processing button.clsBtnPublish, td.state.processing a.clsAPreview, td.state.processing a.clsAView {
+    display: none;
+}
+</style>
+{% endblock mediaCSS %}
+
+{% block navbar_list_items %}
+<li>
+    <div class="btn-group">
+        <a href="/dashboard" class="btn"><i class="icon-arrow-left"></i><span>Back to dashboard</span></a>
+    </div>
+</li>
+{% endblock navbar_list_items %}
+
+{% block content %}
+<form class="form-horizontal" action="pending" method="post" enctype="multipart/form-data">
+    <fieldset>
+        <legend>Upload police station raw data (CSV format)</legend>
+        <div class="control-group">
+            <label class="control-label">Data file:</label>
+            <div class="controls">
+                <input type="file" name="csv-file" required>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Data date:</label>
+            <div class="controls">
+                <input type="date" name="csv-date" required>
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label"></label>
+            <div class="controls">
+                <a id="idBtnUpload" class="btn btn-success">Upload</a>
+            </div>
+        </div>
+    </fieldset>
+</form>
+<hr>
+<table class="table table-striped table-hover">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Size</th>
+            <th>Creation</th>
+            <th>Date</th>
+            <th>Revision</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for ps in police_stations %}
+        <tr id="{{ ps['token'] }}">
+            <td>{{ loop.index }}</td>
+            <td>{{ ps['name'] }}</td>
+            <td>{{ ps['size'] }}</td>
+            <td>{{ ps['creation'] }}</td>
+            <td>{{ ps['date'] }}</td>
+            <td>{{ ps['revision'] }}</td>
+            <td class="state {{ ps['state'] }}">
+                <button class="btn btn-primary clsBtnPopulate">Populate</button>
+                <button class="btn btn-primary clsBtnPublish">Publish</button>
+                <a class="btn btn-success clsAPreview" href="/opendata/police_station/{{ ps['date'] }}r{{ ps['revision'] }}">Preview</a>
+                <a class="btn btn-success clsAView" href="/opendata/police_station/{{ ps['date'] }}r{{ ps['revision'] }}">View</a>
+                <div>Processing..., please wait. <span>0</span> seconds passed.</div>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock content %}
+
+{% block mediaJS %}
+<script type="text/javascript">
+$('#idBtnUpload').on('click', function() {
+    var form = $(this).closest('form');
+    var myself = $(this);
+
+    myself.prop('disabled', true);
+    $.ajax({
+        url: '/blobstore/get_upload_url',
+        type: 'GET',
+        data: {
+            success_path: '{{ success_path }}'
+        }
+    }).done(function(data) {
+        var upload_url = data[0];
+        form.attr('action', data[0]);
+        form.trigger('submit');
+    }).fail(function() {
+        console.error('Fail to retrieve blob upload url');
+    }).always(function() {
+        myself.prop('disabled', false);
+    });
+});
+function increase_span_number(span, inc) {
+    span.innerText = parseInt(span.innerText) + inc;
+}
+$('.clsBtnPopulate').on('click', function() {
+    var tr = $(this).closest('tr');
+    var td = $(this).closest('td');
+    var token = tr.attr('id');
+    var myself = $(this);
+    var spend_time_span = td.find('div span')[0];
+
+    myself.prop('disabled', true);
+    td.removeClass('initial').addClass('processing');
+    var timer_id = setInterval(increase_span_number, 1000, spend_time_span, 1);
+    $.ajax({
+        url: '/opendata/police_stations',
+        type: 'PUT',
+        data: {
+            token: token,
+            action: 'populate'
+        }
+    }).done(function() {
+        td.removeClass('processing').addClass('populated');
+    }).fail(function() {
+        td.removeClass('processing').addClass('initial');
+    }).always(function() {
+        myself.prop('disabled', false);
+        clearInterval(timer_id);
+        spend_time_span.innerText = 0;
+    });
+});
+$('.clsBtnPublish').on('click', function() {
+    var tr = $(this).closest('tr');
+    var td = $(this).closest('td');
+    var token = tr.attr('id');
+    var myself = $(this);
+    var spend_time_span = td.find('div span')[0];
+
+    myself.prop('disabled', true);
+    td.removeClass('populated').addClass('processing');
+    var timer_id = setInterval(increase_span_number, 1000, spend_time_span, 1);
+    $.ajax({
+        url: '/opendata/police_stations',
+        type: 'PUT',
+        data: {
+            token: token,
+            action: 'publish'
+        }
+    }).done(function() {
+        td.removeClass('processing').addClass('published');
+    }).fail(function() {
+        td.removeClass('processing').addClass('populated');
+    }).always(function() {
+        myself.prop('disabled', false);
+        clearInterval(timer_id);
+        spend_time_span.innerText = 0;
+    });
+});
+</script>
+{% endblock mediaJS %}

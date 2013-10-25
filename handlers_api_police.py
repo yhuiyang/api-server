@@ -35,32 +35,48 @@ class ApiPublishedPoliceStations(webapp2.RequestHandler):
 
     def get(self):
 
+        INVALID_DATE = date(1970, 1, 1)
+        INVALID_REV = 0
+
         self.response.content_type = 'application/json'
 
-        # fill dummy info
+        # init output data
         output = dict()
-        output['date'] = '1970-01-01'
-        output['data'] = []
 
         mgr = models.PoliceStationManager.getInstance()
-        if len(mgr.published_data_date) == 0:
+        if len(mgr.meta_list) == 0:
+            output['date'] = INVALID_DATE.isoformat()
+            output['rev'] = INVALID_REV
+            output['data'] = []
             self.response.body = json.dumps(output, indent=None, separators=(',', ':'))
             return
 
-        client_data_date_str = self.request.get('d')
-        latest_data_date = mgr.published_data_date[0]
-        if not client_data_date_str:
-            output['date'] = latest_data_date.isoformat()
-            output['data'] = models.PublishedPoliceStations.get_by_id(latest_data_date.isoformat()).list
+        # check what is latest date and rev
+        latest_date, latest_rev = mgr.getLatestDateAndRevision(INVALID_DATE, INVALID_REV)
+        output['date'] = latest_date.isoformat()
+        output['rev'] = latest_rev
+
+        # check client date and rev
+        client_date_str = self.request.get('d', default_value=INVALID_DATE.isoformat())
+        client_rev_str = self.request.get('r', default_value=str(INVALID_REV))
+        try:
+            cy, cm, cd = client_date_str.split('-')
+            client_date = date(int(cy), int(cm), int(cd))
+            client_rev = int(client_rev_str)
+        except ValueError:
+            client_date = INVALID_DATE
+            client_rev = INVALID_REV
+
+        fill_data = False
+        if latest_date > client_date:
+            fill_data = True
+        elif latest_date == client_date and latest_rev > client_rev:
+            fill_data = True
+        if fill_data:
+            strId = latest_date.isoformat() + 'r' + str(latest_rev)
+            output['data'] = models.PublishedPoliceStations.get_by_id(strId).list
         else:
-            try:
-                cy, cm, cd = client_data_date_str.split('-')
-                client_data_date = date(int(cy), int(cm), int(cd))
-                if latest_data_date > client_data_date:
-                    output['data'] = models.PublishedPoliceStations.get_by_id(latest_data_date.isoformat()).list
-                output['date'] = latest_data_date.isoformat()
-            except ValueError:
-                pass
+            output['data'] = []
 
         self.response.body = json.dumps(output, indent=None, separators=(',', ':'))
 
