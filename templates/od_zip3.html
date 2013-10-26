@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block mediaCSS %}
+<style type="text/css">
+@media (min-width: 981px) {
+    body {
+        padding-top: 60px;
+    }
+}
+div.tab-pane ul li {
+    display: inline-block;
+    min-width: 100px;
+}
+</style>
+{% endblock mediaCSS %}
+
+{% block navbar_list_items %}
+<li>
+    <div class="btn-group">
+        <a href="/dashboard" class="btn"><i class="icon-arrow-left"></i><span>Back to dashboard</span></a>
+    </div>
+</li>
+{% endblock navbar_list_items %}
+
+{% block content %}
+<form class="form" action="/opendata/zip3" method="POST">
+    <fieldset>
+        <legend>Post office data</legend>
+        <div>
+            <label for="src-url">URL:</label>
+            <input id="src-url" class="input-xxlarge" name="url" type="url" value="{{ url }}" placeholder="Url link to zip code of Taiwan township" required autofocus>
+        </div>
+        <div>
+            <input class="btn btn-success" type="submit" value="Parse">
+        </div>
+    </fieldset>
+</form>
+{% if counties %}
+<hr>
+<div class="tabbable">
+    <ul class="nav nav-tabs">
+        {% for county in counties %}
+        <li{% if loop.first %} class="active"{% endif %}><a href="#tab{{ loop.index }}" data-toggle="tab">{{ county.key.id().decode('utf8') }}({{ county.township_list | length }})</a></li>
+        {% endfor %}
+    </ul>
+    <div class="tab-content">
+        {% for county in counties %}
+        <div class="tab-pane{% if loop.first %} active{% endif %}" id="tab{{ loop.index }}">
+            <ul>
+            {% for township in county.township_list %}
+                <li>{{ township.zip_int }} {{ township.name }}</li>
+            {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock content %}
+
+{% block mediaJS %}
+<script type="text/javascript">
+
+</script>
+{% endblock mediaJS %}
