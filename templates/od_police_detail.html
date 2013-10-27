@@ -53,6 +53,10 @@
 {% endif %}
 {% endblock content %}
 
+{% macro ps_infowin(name, tel, addr, latlng) -%}
+<div><h4>{{ name }}</h4><p>{{ tel }}<br>{{ addr }}<br>{{ latlng }}</p></div>
+{%- endmacro %}
+
 {% block mediaJS %}
 <script type="text/javascript"
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD2wYBzKkrqNYRkCEbT8MitMzbCF4m0vBU&sensor=false&v=3"></script>
@@ -68,6 +72,7 @@ $(document).ready(function(){
         var map = new google.maps.Map(document.getElementById('google-map-canvas'), mapOptions);
 
         var markers = new Array();
+        var infowin = new Array();
         var latLngBounds = new google.maps.LatLngBounds();
         var latLngText;
         var split;
@@ -83,6 +88,19 @@ $(document).ready(function(){
             map: map,
             position: latLng,
             title: "{{ ps.name }}"
+        });
+
+        infowin[{{ loop.index0 }}] = new google.maps.InfoWindow({
+            content: "{{ ps_infowin(ps.name, ps.tel, ps.address, ps.latlng) }}"
+        });
+        google.maps.event.addListener(markers[{{ loop.index0 }}], 'click', function() {
+            /* check if infowindow is opened or not. */
+            var m = infowin[{{ loop.index0 }}].getMap();
+            if (m != null && typeof m != "undefined") {
+                infowin[{{ loop.index0 }}].close();
+            } else {
+                infowin[{{ loop.index0 }}].open(map, markers[{{ loop.index0 }}]);
+            }
         });
         {% endfor %}
 
