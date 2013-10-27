@@ -19,6 +19,7 @@
 # python imports
 import logging
 from datetime import date, datetime
+from collections import OrderedDict
 
 # GAE imports
 from webapp2_extras.routes import RedirectRoute
@@ -30,7 +31,8 @@ from google.appengine.ext import ndb
 
 # local imports
 from handlers_admin_base import BaseHandler
-import models_opendata as models
+import models_police as models
+import models_zip3
 
 
 ###########################################################################
@@ -48,15 +50,31 @@ def check_runtime_usage():
 ###########################################################################
 class PoliceStationDetailHandler(BaseHandler):
 
-    PAGE_SIZE = 10
-
     def get(self, date, rev):
 
-        result_page, next_cursor, more = models.PoliceStation.query_entities(date, rev).fetch_page(self.PAGE_SIZE)
+        client_county = self.request.get('county')
+        client_township = self.request.get('township')
+        if client_county and client_township:
+            qry = models.PoliceStation.query_entities(date, rev)
+            police_stations = qry.filter(models.PoliceStation.county == client_county, models.PoliceStation.township == client_township)
+        else:
+            police_stations = None
+
+        # { '桃園縣': ['中壢市', '桃園市', ...], ... }
+        counties = OrderedDict()
+        for county_key in models_zip3.Zip3Manager.getInstance().county_key_list:
+            township_list = []
+            county_entity = county_key.get()
+            for township in county_entity.township_list:
+                township_list.append(township.name)
+            counties[county_key.id().decode('utf8')] = township_list
 
         params = {
             'app_name': 'Police Station - ' + date + 'r' + rev,
-            'police_stations': result_page,
+            'client_county': client_county,
+            'client_township': client_township,
+            'police_stations': police_stations,
+            'counties': counties,
         }
         self.render_response('od_police_detail.html', **params)
 

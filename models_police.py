@@ -53,8 +53,8 @@ class PoliceStation(ndb.Model):
     name = ndb.StringProperty(indexed=False, required=True)
     tel = ndb.StringProperty(indexed=False)
     address = ndb.StringProperty(indexed=False)
-    county = ndb.StringProperty(indexed=False)
-    township = ndb.StringProperty(indexed=False)
+    county = ndb.StringProperty()
+    township = ndb.StringProperty()
     xy = ndb.FloatProperty(indexed=False, repeated=True)
     latlng = ndb.GeoPtProperty(indexed=False)
 

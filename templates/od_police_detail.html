@@ -15,6 +15,29 @@
 {% endblock mediaCSS %}
 
 {% block navbar_list_items %}
+{% if counties %}
+<li class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown">{% if client_county %}{{ client_county }}{% else %}Select County{% endif %}<span class="caret"></span></a>
+    <ul class="dropdown-menu">
+        {% for county_name in counties.iterkeys() %}
+        <li><a tabindex="-1" href="?county={{ county_name }}">{{ county_name }} ({{ counties[county_name] | count }})</a></li>
+        {% endfor %}
+    </ul>
+</li>
+<li class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown">{% if client_township %}{{ client_township }}{% else %}Select Township{% endif %}<span class="caret"></span></a>
+    <ul class="dropdown-menu">
+        {% if client_county %}
+            {% for township in counties[client_county] %}
+            <li><a tabindex="-1" href="?county={{ client_county }}&township={{ township }}">{{ township }}</a></li>
+            {% endfor %}
+        {% else %}
+        <li><a>Select county first.</a></li>
+        {% endif %}
+    </ul>
+</li>
+<li class="divider-vertical"></li>
+{% endif %}
 <li>
     <div class="btn-group">
         <a href="/opendata/police_stations" class="btn"><i class="icon-arrow-left"></i><span>Back to police stations</span></a>
@@ -70,7 +93,8 @@
     {% endfor %}
     </tbody>
 </table>
-{#{{ pager(p) }}#}
+{% else %}
+<p>Select County and Township in navbar to show detailed information for police stations within specific township.</p>
 {% endif %}
 {% endblock content %}
 
