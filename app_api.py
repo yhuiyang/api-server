@@ -24,6 +24,7 @@ import webapp2
 # local imports
 from handlers_api_costco import routes as costco_routes
 from handlers_api_police import routes as police_routes
+from handlers_api_zip3 import routes as zip3_routes
 
 
 _debug = os.environ.get('SERVER_SOFTWARE').startswith('Dev')
@@ -32,5 +33,6 @@ _routes = []
 
 _routes.extend(costco_routes)
 _routes.extend(police_routes)
+_routes.extend(zip3_routes)
 
 APP = webapp2.WSGIApplication(routes=_routes, config=_config, debug=_debug)
