@@ -25,7 +25,7 @@ from datetime import date
 import webapp2
 
 # local imports
-import models_opendata as models
+import models_police as models
 
 
 ###########################################################################
