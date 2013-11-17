@@ -59,6 +59,7 @@ class ApiPublishedPoliceStations(webapp2.RequestHandler):
         # check client date and rev
         client_date_str = self.request.get('d', default_value=INVALID_DATE.isoformat())
         client_rev_str = self.request.get('r', default_value=str(INVALID_REV))
+        client_query_str = self.request.get('q', default_value=0)  # 0: query all; not 0: query date/rev only
         try:
             cy, cm, cd = client_date_str.split('-')
             client_date = date(int(cy), int(cm), int(cd))
@@ -72,7 +73,7 @@ class ApiPublishedPoliceStations(webapp2.RequestHandler):
             fill_data = True
         elif latest_date == client_date and latest_rev > client_rev:
             fill_data = True
-        if fill_data:
+        if fill_data and int(client_query_str) == 0:
             strId = latest_date.isoformat() + 'r' + str(latest_rev)
             output['data'] = models.PublishedPoliceStations.get_by_id(strId).list
         else:
