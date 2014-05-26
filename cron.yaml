@@ -1,0 +1,6 @@
+cron:
+- description: check 80plus data
+  url: /cron/80plus
+  schedule: every 60 minutes
+  target: admin
+

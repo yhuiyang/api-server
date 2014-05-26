@@ -23,6 +23,7 @@ import webapp2
 
 # local imports
 from handlers_admin_base import routes as base_routes
+from handlers_admin_cron import routes as cron_routes
 from handlers_admin_costco import routes as costco_routes
 from handlers_admin_police import routes as police_routes
 from handlers_admin_zip3 import routes as zip3_routes
@@ -33,6 +34,7 @@ _config = {}
 _routes = []
 
 _routes.extend(base_routes)
+_routes.extend(cron_routes)
 _routes.extend(costco_routes)
 _routes.extend(police_routes)
 _routes.extend(zip3_routes)
